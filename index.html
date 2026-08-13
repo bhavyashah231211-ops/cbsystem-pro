@@ -547,6 +547,33 @@ const DB={
         })
         .subscribe(status=>{
           setSyncDot(status==='SUBSCRIBED'?'ok':status==='CHANNEL_ERROR'||status==='TIMED_OUT'?'off':'syncing');
+          // If realtime not available, fall back to polling every 3s
+          if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
+            if(!this._pollTimer){
+              this._pollTimer=setInterval(async()=>{
+                try{
+                  const{data,error}=await sb.from('cbs_state').select('data,updated_at').eq('id',code).maybeSingle();
+                  if(error||!data)return;
+                  const remoteTime=new Date(data.updated_at).getTime();
+                  const localTime=new Date(this.d.cfg?.lastSync||0).getTime();
+                  if(remoteTime>localTime&&data.data){
+                    this._applyingRemote=true;
+                    const localCfg=this.d.cfg;
+                    this.d=data.data;
+                    this.d.cfg=Object.assign({},localCfg,data.data.cfg||{},{cloudMode:true,supabaseUrl:localCfg.supabaseUrl,supabaseKey:localCfg.supabaseKey,venueCode:code});
+                    try{localStorage.setItem('cbs2',JSON.stringify(this.d));}catch(e){}
+                    this._cbs.forEach(fn=>{try{fn();}catch(e){}});
+                    this._applyingRemote=false;
+                    setSyncDot('ok');
+                    const el=document.getElementById('sb-sync');if(el)el.textContent='Synced '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+                  }
+                }catch(e){}
+              },3000);
+            }
+          } else if(status==='SUBSCRIBED'){
+            // Realtime working — clear poll timer
+            if(this._pollTimer){clearInterval(this._pollTimer);this._pollTimer=null;}
+          }
         });
     }catch(e){console.error('Cloud sync init failed',e);setSyncDot('off');}
   },
@@ -1868,7 +1895,8 @@ function saveCloud(){
 }
 
 function showCloudSetup(){
-  const sql=`create table if not exists cbs_state (
+  const sql=`-- Run this once in your Supabase SQL Editor
+create table if not exists cbs_state (
   id text primary key,
   data jsonb not null,
   updated_at timestamptz default now()
@@ -1877,6 +1905,8 @@ alter table cbs_state enable row level security;
 create policy "cbs_read" on cbs_state for select using (true);
 create policy "cbs_insert" on cbs_state for insert with check (true);
 create policy "cbs_update" on cbs_state for update using (true);
+
+-- REQUIRED for real-time sync between devices:
 alter publication supabase_realtime add table cbs_state;`;
   const msg='One-time setup — run this once in your Supabase project:\n\n'
     +'1. Create a free project at supabase.com\n'
