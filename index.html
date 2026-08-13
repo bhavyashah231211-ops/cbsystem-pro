@@ -6,32 +6,28 @@
 <title>CBSystem PRO</title>
 
 <!-- PWA: installable on Windows / Android / iOS -->
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0a0f">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="CBSystem PRO">
-<meta name="application-name" content="CBSystem PRO">
-<meta name="msapplication-TileColor" content="#0a0a0f">
-<script>
-(function(){
-  var SVG_SM='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#0a0a0f"/><text x="96" y="130" font-size="110" text-anchor="middle" font-family="Arial Black,sans-serif" fill="#ff6b35">C</text></svg>');
-  var SVG_LG='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="#0a0a0f"/><text x="256" y="360" font-size="300" text-anchor="middle" font-family="Arial Black,sans-serif" fill="#ff6b35">C</text></svg>');
-  var manifest={name:'CBSystem PRO',short_name:'CBSystem',description:'Restaurant & Bar Management System',start_url:location.href.split('?')[0],display:'standalone',background_color:'#0a0a0f',theme_color:'#0a0a0f',orientation:'any',icons:[{src:SVG_SM,sizes:'192x192',type:'image/svg+xml'},{src:SVG_LG,sizes:'512x512',type:'image/svg+xml'}]};
-  try{
-    var blob=new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
-    var url=URL.createObjectURL(blob);
-    var ml=document.createElement('link');ml.rel='manifest';ml.href=url;document.head.appendChild(ml);
-  }catch(e){}
-  var ico=document.createElement('link');ico.rel='icon';ico.type='image/svg+xml';
-  ico.href='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0a0a0f"/><text x="16" y="23" font-size="20" text-anchor="middle" font-family="Arial Black" fill="#ff6b35">C</text></svg>');
-  document.head.appendChild(ico);
-  var atc=document.createElement('link');atc.rel='apple-touch-icon';atc.href=SVG_SM;document.head.appendChild(atc);
-})();
-</script>
+<meta name="apple-mobile-web-app-title" content="CBSystem">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
 
 <!-- Supabase client (used only when Cloud Mode is enabled in Settings) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+// Fallback if primary CDN fails
+window.addEventListener('load',function(){
+  if(typeof window.supabase==='undefined'){
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
+    s.onload=function(){console.log('Supabase loaded via fallback CDN');};
+    document.head.appendChild(s);
+  }
+});
+</script>
 <!-- QR code generator (used by Settings → QR Table Ordering) -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
@@ -47,9 +43,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 
 /* ── STATION SELECT ── */
 #station-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background-image:radial-gradient(ellipse at 30% 40%,rgba(255,107,53,0.1) 0%,transparent 60%);}
-.ss-logo{font-family:'Bebas Neue';font-size:2rem;color:var(--accent);letter-spacing:4px;line-height:1;}
-.ss-sub{font-size:0.75rem;color:var(--text2);letter-spacing:3px;text-transform:uppercase;margin-top:-4px;}
-.ss-company{position:absolute;top:14px;right:18px;font-family:'Bebas Neue';font-size:1rem;color:var(--text2);letter-spacing:3px;opacity:0.6;}
+.ss-logo{font-family:'Bebas Neue';font-size:4.5rem;color:var(--accent);letter-spacing:8px;line-height:1;}
+.ss-sub{font-size:0.75rem;color:var(--text2);letter-spacing:3px;text-transform:uppercase;margin-top:-6px;}
 .ss-venue{font-size:0.82rem;color:var(--text2);margin-bottom:4px;}
 .stations-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:880px;width:92%;}
 .st-card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:26px 16px;cursor:pointer;text-align:center;transition:all 0.22s;-webkit-tap-highlight-color:transparent;}
@@ -159,66 +154,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .mi-img{width:100%;height:62px;object-fit:cover;border-radius:8px;margin-bottom:6px;display:block;background:var(--bg2);}
 .mi-name{font-size:0.75rem;font-weight:600;margin-bottom:2px;}
 .mi-price{font-size:0.86rem;font-weight:700;color:var(--accent);}
-.allg-pill{display:inline-block;font-size:0.48rem;padding:1px 4px;border-radius:4px;background:rgba(255,107,53,0.18);color:var(--accent);border:1px solid rgba(255,107,53,0.35);margin:1px 1px 0 0;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;}
-.allg-pill.cel{background:rgba(45,212,160,0.15);color:var(--green);border-color:rgba(45,212,160,0.35);}
-.allg-grid{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
-.allg-cb{display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:0.68rem;color:var(--text2);user-select:none;transition:all 0.15s;}
-.allg-cb.on{border-color:var(--accent);background:rgba(255,107,53,0.1);color:var(--accent);font-weight:700;}
-.ch25-wrap{background:rgba(255,0,0,0.06);border:2px solid var(--red);border-radius:16px;padding:20px;text-align:center;}
-/* Course firing */
-.course-tag{display:inline-block;font-size:0.52rem;padding:1px 5px;border-radius:4px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-left:4px;}
-.course-s{background:rgba(45,212,160,0.15);color:var(--green);border:1px solid rgba(45,212,160,0.3);}
-.course-m{background:rgba(74,158,255,0.15);color:var(--blue);border:1px solid rgba(74,158,255,0.3);}
-.course-d{background:rgba(167,139,250,0.15);color:var(--purple);border:1px solid rgba(167,139,250,0.3);}
-.fire-btn{padding:4px 10px;border-radius:8px;font-size:0.68rem;font-weight:700;border:none;cursor:pointer;transition:all 0.15s;}
-.fire-btn:disabled{opacity:0.35;cursor:default;}
-/* Happy hour */
-.hh-badge{display:inline-block;background:rgba(255,215,0,0.2);color:var(--gold);border:1px solid rgba(255,215,0,0.4);border-radius:5px;font-size:0.52rem;padding:1px 5px;font-weight:700;margin-left:3px;}
-.hh-orig{text-decoration:line-through;font-size:0.68rem;color:var(--text2);margin-left:3px;}
-/* Upsell modal */
-.upsell-card{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all 0.15s;}
-.upsell-card:hover{border-color:var(--accent);background:rgba(255,107,53,0.06);}
-.upsell-em{font-size:1.6rem;flex-shrink:0;}
-.upsell-info{flex:1;}
-.upsell-name{font-size:0.78rem;font-weight:600;color:var(--text);}
-.upsell-price{font-size:0.72rem;color:var(--accent);font-weight:700;}
-/* Waste log */
-.waste-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;background:var(--card);border:1px solid var(--border);margin-bottom:5px;}
-.waste-em{font-size:1.2rem;flex-shrink:0;}
-.waste-info{flex:1;font-size:0.74rem;}
-.waste-cost{font-size:0.8rem;font-weight:700;color:var(--red);}
-/* 86 button on kitchen ticket */
-.kt-86{font-size:0.6rem;padding:2px 7px;border-radius:5px;border:1px solid var(--red);background:rgba(255,69,96,0.1);color:var(--red);cursor:pointer;font-weight:700;margin-left:4px;}
-.kt-86:hover{background:var(--red);color:#fff;}
-/* Clock-in */
-.shift-row{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:5px;font-size:0.76rem;}
-.shift-active{border-color:var(--green);background:rgba(45,212,160,0.06);}
-.shift-name{font-weight:700;color:var(--text);}
-.shift-time{color:var(--text2);font-size:0.68rem;}
-.shift-dur{font-weight:700;color:var(--green);}
-/* Table timer — colour classes applied to tc cells */
-.tc.t-warn{border-color:rgba(255,165,0,0.6)!important;background:rgba(255,165,0,0.08)!important;}
-.tc.t-over{border-color:rgba(255,69,96,0.7)!important;background:rgba(255,69,96,0.1)!important;animation:pulse-r 2s infinite;}
-@keyframes pulse-r{0%,100%{box-shadow:0 0 0 0 rgba(255,69,96,0);}50%{box-shadow:0 0 0 4px rgba(255,69,96,0.25);}}
-/* Calorie display */
-.mi-cal{font-size:0.5rem;color:var(--text2);margin-top:1px;}
-/* Voucher */
-.voucher-card{background:linear-gradient(135deg,var(--card) 0%,rgba(255,215,0,0.06) 100%);border:1px solid rgba(255,215,0,0.3);border-radius:12px;padding:12px 14px;margin-bottom:7px;}
-.voucher-code{font-family:'JetBrains Mono';font-size:1rem;font-weight:700;color:var(--gold);letter-spacing:3px;}
-.voucher-meta{font-size:0.66rem;color:var(--text2);margin-top:3px;}
-/* Kitchen prep timer */
-.kt-prep{font-size:0.58rem;padding:1px 6px;border-radius:4px;font-weight:700;margin-left:5px;}
-.kt-prep.fresh{background:rgba(45,212,160,0.15);color:var(--green);}
-.kt-prep.mid{background:rgba(255,165,0,0.15);color:#ffa500;}
-.kt-prep.late{background:rgba(255,69,96,0.15);color:var(--red);}
-/* Multi-section tab */
-.sec-tab{padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-size:0.72rem;cursor:pointer;font-weight:500;transition:all 0.15s;}
-.sec-tab.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
-.ch25-icon{font-size:3rem;margin-bottom:8px;}
-.ch25-title{font-family:'Bebas Neue';font-size:2rem;letter-spacing:3px;color:var(--red);margin-bottom:6px;}
-.ch25-sub{font-size:0.78rem;color:var(--text2);margin-bottom:16px;line-height:1.6;}
-.ch25-btns{display:flex;gap:8px;}
-.mi-allg{margin-top:3px;display:flex;flex-wrap:wrap;gap:2px;}
 .mi-cat{font-size:0.56rem;color:var(--text2);margin-top:2px;}
 .mi-dest{position:absolute;top:5px;right:5px;font-size:0.46rem;padding:2px 4px;border-radius:7px;font-weight:700;text-transform:uppercase;}
 .db-bar{background:rgba(155,89,182,0.2);color:var(--bar);}
@@ -392,70 +327,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .t-r{border-left:3px solid var(--red);}
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-/* ═══════════════════════════════
-   RESPONSIVE — TABLET (≤900px)
-═══════════════════════════════ */
-@media(max-width:900px){
-  .stations-grid{grid-template-columns:repeat(3,1fr);max-width:600px;}
-  .pos-order{width:220px;}
-  .set-grid{grid-template-columns:1fr;}
-  .dc-grid{grid-template-columns:repeat(2,1fr)!important;}
-  .k-col{min-width:200px;}
-}
-/* ═══════════════════════════════
-   RESPONSIVE — MOBILE (≤600px)
-═══════════════════════════════ */
-@media(max-width:600px){
-  .ss-company{font-size:0.75rem;}
-  .ss-logo{font-size:1.5rem;letter-spacing:2px;}
-  .ss-sub{font-size:0.65rem;letter-spacing:1px;}
-  .stations-grid{grid-template-columns:repeat(2,1fr);gap:8px;width:95%;}
-  .st-card{padding:18px 10px;border-radius:14px;}
-  .st-icon{font-size:1.8rem;margin-bottom:6px;}
-  .st-name{font-size:1.1rem;}
-  .st-desc{font-size:0.55rem;}
-  .pin-pad{grid-template-columns:repeat(3,68px);gap:7px;}
-  .pk{width:68px;height:68px;font-size:1.2rem;}
-  .staff-chip{min-width:58px;padding:8px 9px;}
-  .topbar{padding:0 8px;height:48px;gap:5px;}
-  .t-clock{display:none;}
-  .t-tabs .tab{font-size:0.65rem;padding:4px 8px;}
-  #t-logo-name{font-size:1.05rem;}
-  .pos-wrap{flex-direction:column;}
-  .pos-tables{width:100%!important;height:auto;flex-shrink:0;border-right:none;border-bottom:1px solid var(--border);}
-  .pos-tables.mini{height:52px;width:100%!important;}
-  .pos-tables .tg{grid-template-columns:repeat(5,1fr);padding:6px;}
-  .pos-tables .tc{padding:5px 2px;font-size:0.7rem;}
-  .menu-g{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));}
-  .pos-order{width:100%;border-left:none;border-top:1px solid var(--border);max-height:42vh;flex-shrink:0;}
-  .sbar{display:none;}
-  .set-grid{grid-template-columns:1fr;}
-  .modal{padding:14px;border-radius:12px;max-height:92vh;}
-  .k-cols{padding:6px;}
-  .k-col{min-width:180px;}
-  .bar-g{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));padding:8px;}
-  .ow-wrap{padding:10px;}
-}
-@media(max-width:380px){
-  .stations-grid{grid-template-columns:repeat(2,1fr);gap:6px;}
-  .st-card{padding:14px 8px;border-radius:12px;}
-  .st-icon{font-size:1.5rem;}
-  .st-name{font-size:1rem;}
-  .pin-pad{grid-template-columns:repeat(3,60px);gap:6px;}
-  .pk{width:60px;height:60px;font-size:1.1rem;}
-  .pos-tables .tg{grid-template-columns:repeat(4,1fr);}
-  .menu-g{grid-template-columns:repeat(auto-fill,minmax(95px,1fr));}
-  .bar-g{grid-template-columns:1fr 1fr;}
-}
 </style>
 </head>
 <body>
 
 <!-- STATION SELECT — boots here directly -->
 <div id="station-screen">
-  <div class="ss-company">CBSystem</div>
-  <div class="ss-logo">CBSystem PRO</div>
-  <div class="ss-sub">Powering Every Order, Every Pour.</div>
+  <div class="ss-logo">CBSystem</div>
+  <div class="ss-sub">Professional Restaurant & Bar Platform</div>
   <div class="ss-venue" id="ss-venue">Loading...</div>
   <div class="stations-grid">
     <div class="st-card sc-till"   onclick="goLogin('till')">   <div class="st-icon">🖥️</div><div class="st-name">Till</div>   <div class="st-desc">POS · Payments · Orders</div></div>
@@ -467,20 +346,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div class="st-card sc-self"   onclick="openSelfOrder()"><div class="st-icon">📲</div><div class="st-name">Self Order</div><div class="st-desc">Customer Self-Ordering Kiosk</div></div>
   </div>
   <div style="font-size:0.62rem;color:var(--text2);margin-top:4px" id="ss-mode-lbl">Local Mode · v2.0 PRO</div>
-</div>
-
-<!-- PWA Install banner — fixed bottom, appears when browser ready -->
-<div id="pwa-install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#ff6b35;padding:12px 20px;display:none;align-items:center;justify-content:center;gap:12px;z-index:9999;box-shadow:0 -4px 20px rgba(255,107,53,0.3);">
-  <span style="font-size:0.82rem;font-weight:700;color:#fff;letter-spacing:0.5px">📲 Install CBSystem PRO as an app</span>
-  <button id="pwa-install-btn" onclick="pwaTriggerInstall()" style="background:#fff;color:#ff6b35;border:none;border-radius:9px;padding:8px 18px;font-size:0.8rem;font-weight:800;cursor:pointer;letter-spacing:0.5px;">⬇️ Install App</button>
-  <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:transparent;border:none;color:rgba(255,255,255,0.7);font-size:1.1rem;cursor:pointer;padding:4px 8px">✕</button>
-</div>
-
-<!-- iOS Safari install hint — fixed bottom -->
-<div id="ios-install-hint" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);padding:14px 20px;text-align:center;font-size:0.76rem;color:var(--text2);line-height:1.7;z-index:9999;box-shadow:0 -4px 20px rgba(0,0,0,0.3);">
-  <div style="font-size:1rem;margin-bottom:3px">📲 <strong style="color:var(--text)">Install CBSystem PRO on your iPhone / iPad</strong></div>
-  Tap <strong style="color:var(--accent)">Share</strong> <span style="font-size:1rem">⎙</span> at the bottom of Safari, then tap <strong style="color:var(--accent)">"Add to Home Screen"</strong>
-  <button onclick="document.getElementById('ios-install-hint').style.display='none'" style="display:block;margin:8px auto 0;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:4px 16px;font-size:0.68rem;cursor:pointer;">Dismiss</button>
 </div>
 
 <!-- LOGIN -->
@@ -506,10 +371,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div id="t-venue-logo" style="display:flex;align-items:center;gap:8px;min-width:60px;">
-      <img id="t-logo-img" src="" alt="" style="height:32px;width:auto;max-width:90px;object-fit:contain;border-radius:4px;display:none;">
-      <span id="t-logo-name" style="font-family:'Bebas Neue';font-size:1.3rem;color:var(--accent);letter-spacing:2px;"></span>
-    </div>
+    <div class="t-logo">CBS</div>
     <div class="t-badge" id="t-badge">Till</div>
     <div class="t-tabs" id="t-tabs"></div>
     <div class="t-right">
@@ -527,7 +389,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div class="sb-it"><div class="sb-dot" style="background:var(--green)"></div>Online</div>
     <div class="sb-it" id="sb-st"></div>
     <div class="sb-it" id="sb-md"></div>
-    <div class="sb-it" id="sb-venue-name" style="margin-left:auto;color:#2a2a40;font-size:0.56rem"></div>
+    <div class="sb-it" style="margin-left:auto;color:#2a2a40;font-size:0.56rem">CBSystem PRO © 2025</div>
     <div class="sb-it" id="sb-sync"></div>
   </div>
 </div>
@@ -590,10 +452,7 @@ const DMENU=[
 ];
 const DCFG={
   venueName:'The Anchor',venueAddr:'1 High Street',venueTel:'01234 567890',
-  tableCount:20,barSeats:8,vatRate:20,serviceCharge:false,serviceChargeRate:10,vatNum:'',challenge25:true,
-  happyHour:{enabled:false,startH:16,startM:0,endH:18,endM:0,disc:50,days:[0,1,2,3,4,5,6]},
-  tableWarnMins:90,tableOverMins:120,
-  sections:[{id:'restaurant',label:'Restaurant',emoji:'🍽'},{id:'bar',label:'Bar',emoji:'🍺'}],
+  tableCount:20,barSeats:8,vatRate:20,serviceCharge:false,serviceChargeRate:10,
   currency:'£',receiptFooter:'Thank you for visiting!',
   cloudMode:false,supabaseUrl:'',supabaseKey:'',venueCode:'',selfOrderUrl:'',sumupCode:'',syncInterval:5000,lastSync:null,
 };
@@ -620,10 +479,6 @@ const DB={
     if(!this.d.txns)this.d.txns=[];
     if(!this.d.bkgs)this.d.bkgs=[];
     if(!this.d.voids)this.d.voids=[];
-    if(!this.d.ageChecks)this.d.ageChecks=[];
-    if(!this.d.wasteLog)this.d.wasteLog=[];
-    if(!this.d.shifts)this.d.shifts=[];
-    if(!this.d.vouchers)this.d.vouchers=[];
     if(!this.d.idc)this.d.idc=0;
   },
   save(){
@@ -734,10 +589,6 @@ window.addEventListener('load',()=>{
   setInterval(()=>{const el=document.getElementById('t-clock');if(el)el.textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});},1000);
   setInterval(()=>{if(S.view==='k')renderKV();if(S.view==='bar')renderBV();},5000);
   DB.sub(()=>{updBadges();if(S.view==='k')renderKV();if(S.view==='bar')renderBV();});
-  // Refresh table grid every 60s so table timers update live
-  setInterval(()=>{if(document.getElementById('tg'))renderTG();},60000);
-  // Refresh kitchen every second for live prep timers
-  setInterval(()=>{if(S.view==='k')renderKV();},1000);
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('service-worker.js').catch(()=>{/* offline install just won't be available */});
   }
@@ -746,8 +597,7 @@ window.addEventListener('load',()=>{
 function initStationScreen(){
   const cfg=DB.get('cfg');
   document.getElementById('ss-venue').textContent=cfg.venueName||'Restaurant';
-  document.getElementById('ss-mode-lbl').textContent=(cfg.cloudMode?'☁️ Cloud Mode':'💾 Local Mode')+' · v2.0';
-  updateTopbarLogo(cfg);
+  document.getElementById('ss-mode-lbl').textContent=(cfg.cloudMode?'☁️ Cloud Mode':'💾 Local Mode')+' · CBSystem PRO v2.0';
 }
 
 // ═══════════════════════════════════════
@@ -909,8 +759,9 @@ function buildPOSCore(wrap,showPayment){
     <div class="pos-tables" id="pos-tables-col">
       <div class="p-hdr">
         <div class="p-lbl">Tables</div>
-        <div class="sec-tabs" id="sec-tabs">
-          ${(DB.get('cfg').sections||[{id:'restaurant',label:'Restaurant',emoji:'🍽'},{id:'bar',label:'Bar',emoji:'🍺'}]).map((s,i)=>`<button class="stab${i===0?' on':''}" onclick="setSec('${s.id}',this)">${s.emoji} ${s.label}</button>`).join('')}
+        <div class="sec-tabs">
+          <button class="stab on" onclick="setSec('restaurant',this)">Restaurant</button>
+          <button class="stab" onclick="setSec('bar',this)">Bar</button>
         </div>
         <button class="pt-toggle" id="pt-toggle" onclick="toggleTablesPanel()" title="Expand / collapse tables">«</button>
       </div>
@@ -980,20 +831,14 @@ function renderTG(){
   const g=document.getElementById('tg');if(!g)return;
   const orders=DB.get('tOrders');
   const cfg=DB.get('cfg');const tc=cfg.tableCount||20;const bc=cfg.barSeats||8;
-  const warnMins=cfg.tableWarnMins||90;const overMins=cfg.tableOverMins||120;
   let h='';
   if(S.sec==='restaurant'){
     for(let i=1;i<=tc;i++){const t='T'+i;const o=orders[t];const has=o?.items?.length;const tot=has?calcTotal(o.items,o.discPct||0).grand:0;
-      const mins=has&&o.openedAt?Math.floor((Date.now()-o.openedAt)/60000):0;
-      const timerCls=has?(mins>=overMins?'t-over':mins>=warnMins?'t-warn':''):'';
-      const timerLbl=has&&mins>=warnMins?`<div style="font-size:0.5rem;font-weight:700;color:${mins>=overMins?'var(--red)':'#ffa500'}">${mins}m</div>`:'';
-      h+=`<div class="tc ${has?'occ':''} ${S.selTable===t?'sel':''} ${timerCls}" onclick="selT('${t}')"><div class="tc-st"></div>${o?.qrOrder?'<div class="tc-qr">📱</div>':''}<div class="tc-num">${i}</div><div class="tc-lbl">${has?(o.covers||1)+' cvr':'Free'}</div>${has?`<div class="tc-amt">${fmt(tot)}</div>`:''}${timerLbl}</div>`;
+      h+=`<div class="tc ${has?'occ':''} ${S.selTable===t?'sel':''}" onclick="selT('${t}')"><div class="tc-st"></div>${o?.qrOrder?'<div class="tc-qr">📱</div>':''}<div class="tc-num">${i}</div><div class="tc-lbl">${has?(o.covers||1)+' cvr':'Free'}</div>${has?`<div class="tc-amt">${fmt(tot)}</div>`:''}</div>`;
     }
   }else{
     for(let i=1;i<=bc;i++){const t='B'+i;const o=orders[t];const has=o?.items?.length;const tot=has?calcTotal(o.items,o.discPct||0).grand:0;
-      const mins=has&&o.openedAt?Math.floor((Date.now()-o.openedAt)/60000):0;
-      const timerCls=has?(mins>=overMins?'t-over':mins>=warnMins?'t-warn':''):'';
-      h+=`<div class="tc bt ${has?'occ':''} ${S.selTable===t?'sel':''} ${timerCls}" onclick="selT('${t}')"><div class="tc-st"></div>${o?.qrOrder?'<div class="tc-qr">📱</div>':''}<div class="tc-num">${i}</div><div class="tc-lbl">${has?'Open':'Bar'}</div>${has?`<div class="tc-amt" style="color:var(--bar)">${fmt(tot)}</div>`:''}</div>`;
+      h+=`<div class="tc bt ${has?'occ':''} ${S.selTable===t?'sel':''}" onclick="selT('${t}')"><div class="tc-st"></div>${o?.qrOrder?'<div class="tc-qr">📱</div>':''}<div class="tc-num">${i}</div><div class="tc-lbl">${has?'Open':'Bar'}</div>${has?`<div class="tc-amt" style="color:var(--bar)">${fmt(tot)}</div>`:''}</div>`;
     }
   }
   g.innerHTML=h;
@@ -1032,118 +877,36 @@ function renderCB(){
   b.innerHTML=cats.map(c=>`<button class="cBtn${c===S.cat?' on':''}" onclick="S.cat='${c}';renderCB();renderMG()">${c}</button>`).join('');
 }
 
-function isHappyHour(){
-  const hh=DB.get('cfg').happyHour||{};
-  if(!hh.enabled)return false;
-  const now=new Date();
-  const day=now.getDay();
-  if(hh.days&&!hh.days.includes(day))return false;
-  const nowMins=now.getHours()*60+now.getMinutes();
-  const startMins=(hh.startH||16)*60+(hh.startM||0);
-  const endMins=(hh.endH||18)*60+(hh.endM||0);
-  return nowMins>=startMins&&nowMins<endMins;
-}
-function hhPrice(item){
-  if(!isHappyHour())return item.price;
-  const hh=DB.get('cfg').happyHour||{};
-  if(item.dest!=='bar'&&!item.happyHour)return item.price;
-  return+(item.price*(1-(hh.disc||50)/100)).toFixed(2);
-}
-
 function renderMG(){
   const g=document.getElementById('mg');if(!g)return;
   let items=DB.get('menu');
   if(S.mf)items=items.filter(m=>m.name.toLowerCase().includes(S.mf.toLowerCase())||m.category.toLowerCase().includes(S.mf.toLowerCase()));
   if(S.cat!=='All')items=items.filter(m=>m.category===S.cat);
-  const hh=isHappyHour();const hhCfg=DB.get('cfg').happyHour||{};
-  g.innerHTML=items.map(m=>{
-    const discounted=hh&&(m.dest==='bar'||m.happyHour);
-    const price=discounted?hhPrice(m):m.price;
-    return`<div class="mi ${m.dest==='bar'?'bar-i':''} ${m.available===false?'unav':''}" onclick="addMI('${m.id}')">
+  g.innerHTML=items.map(m=>`<div class="mi ${m.dest==='bar'?'bar-i':''} ${m.available===false?'unav':''}" onclick="addMI('${m.id}')">
     <span class="mi-dest ${m.dest==='bar'?'db-bar':'db-kit'}">${m.dest==='bar'?'🍺':'🍳'}</span>
-    ${m.alcohol?'<span style="position:absolute;top:5px;right:5px;font-size:0.55rem;background:var(--red);color:#fff;border-radius:4px;padding:1px 4px;font-weight:700">18+</span>':''}
     ${m.img?`<img class="mi-img" src="${m.img}" alt="">`:`<span class="mi-emoj">${m.emoji}</span>`}
-    <div class="mi-name">${esc(m.name)}${discounted?'<span class="hh-badge">HH</span>':''}</div>
-    <div class="mi-price">${fmt(price)}${discounted?`<span class="hh-orig">${fmt(m.price)}</span>`:''}</div>
+    <div class="mi-name">${esc(m.name)}</div>
+    <div class="mi-price">${fmt(m.price)}</div>
     <div class="mi-cat">${m.category}</div>
-    ${m.calories?`<div class="mi-cal">${m.calories} kcal</div>`:''}
-    ${(m.allergens&&m.allergens.length)?`<div class="mi-allg">${m.allergens.map(a=>`<span class="allg-pill">${a}</span>`).join('')}</div>`:''}
-  </div>`;
-  }).join('');
+  </div>`).join('');
 }
 
 function addMI(id){
   if(!S.selTable){toast('Select a table first','⚠️','t-o');return;}
   const item=DB.get('menu').find(m=>m.id===id);if(!item)return;
-  const cfg=DB.get('cfg');
-  if(item.alcohol&&cfg.challenge25!==false){
-    showModal(`<div class="ch25-wrap">
-      <div class="ch25-icon">🪪</div>
-      <div class="ch25-title">Challenge 25</div>
-      <div class="ch25-sub"><strong style="color:var(--text)">${esc(item.name)}</strong> is an alcoholic product.<br>Does the customer appear to be <strong style="color:var(--text)">under 25?</strong><br>If yes — ask for ID. If they cannot prove they are 18+, do not serve.</div>
-      <div class="ch25-btns">
-        <button class="btn" style="flex:1;background:var(--red);color:#fff;border-color:var(--red)" onclick="closeModal();toast('Sale refused — ID not provided','🚫','t-r')">🚫 Refuse Sale</button>
-        <button class="btn btn-g" style="flex:1" onclick="closeModal();_addMI('${id}');logAgeCheck('${id}')">✅ ID Checked / Over 25</button>
-      </div>
-    </div>`);
-    return;
-  }
-  _addMI(id);
-}
-function logAgeCheck(itemId){
-  const log=DB.get('ageChecks')||[];
-  log.push({itemId,staff:S.user?.name,table:S.selTable,time:Date.now()});
-  DB.set('ageChecks',log);
-}
-function _addMI(id){
-  const item=DB.get('menu').find(m=>m.id===id);if(!item)return;
-  const price=hhPrice(item);
-  const o=DB.get('tOrders');const ex=o[S.selTable].items.find(i=>i.id===id&&!i.sent&&!i.note&&i.price===price);
+  const o=DB.get('tOrders');const ex=o[S.selTable].items.find(i=>i.id===id&&!i.sent&&!i.note);
   if(ex){ex.qty++;}
-  else o[S.selTable].items.push({id,name:item.name,price,origPrice:item.price,qty:1,dest:item.dest,sent:false,emoji:item.emoji,note:'',by:S.user?.name,at:Date.now(),alcohol:item.alcohol||false,hhApplied:price!==item.price});
+  else o[S.selTable].items.push({id,name:item.name,price:item.price,qty:1,dest:item.dest,sent:false,emoji:item.emoji,note:'',by:S.user?.name,at:Date.now()});
   DB.set('tOrders',o);renderOP();renderTG();
-  // Upsell prompt
-  if(item.upsells&&item.upsells.length){
-    const menu=DB.get('menu');
-    const suggestions=item.upsells.map(uid=>menu.find(m=>m.id===uid)).filter(Boolean).filter(m=>m.available!==false);
-    if(suggestions.length){
-      setTimeout(()=>showUpsell(item,suggestions),300);
-    }
-  }
-}
-
-function showUpsell(item,suggestions){
-  showModal(`<div style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Added ${item.emoji} ${esc(item.name)}</div>
-    <div style="font-size:0.88rem;font-weight:700;color:var(--text);margin-bottom:12px">Customers also order…</div>
-    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px">
-      ${suggestions.map(m=>{
-        const p=hhPrice(m);
-        const hh=p!==m.price;
-        return`<div class="upsell-card" onclick="closeModal();_addMI('${m.id}');toast('${esc(m.name)} added','${m.emoji}','t-g')">
-          <div class="upsell-em">${m.img?`<img src="${m.img}" style="width:40px;height:40px;object-fit:cover;border-radius:8px">`:m.emoji}</div>
-          <div class="upsell-info">
-            <div class="upsell-name">${esc(m.name)}${hh?'<span class="hh-badge">HH</span>':''}</div>
-            <div class="upsell-price">${fmt(p)}${hh?`<span class="hh-orig">${fmt(m.price)}</span>`:''}</div>
-            ${(m.allergens&&m.allergens.length)?`<div style="font-size:0.58rem;color:var(--accent);margin-top:2px">⚠️ ${m.allergens.slice(0,3).join(', ')}${m.allergens.length>3?'…':''}</div>`:''}
-          </div>
-          <div style="font-size:1.2rem;color:var(--border)">＋</div>
-        </div>`;
-      }).join('')}
-    </div>
-    <button class="btn btn-o" style="width:100%" onclick="closeModal()">No thanks</button>`);
 }
 
 function addNote(idx){
   if(!S.selTable)return;
   const o=DB.get('tOrders');const item=o[S.selTable].items[idx];if(!item)return;
   showModal(`<div class="modal-t">📝 Amendment — ${item.emoji} ${esc(item.name)}</div>
-    <div style="font-size:0.75rem;color:var(--text2);margin-bottom:12px">Add amendments or set which course this item belongs to.</div>
+    <div style="font-size:0.75rem;color:var(--text2);margin-bottom:12px">Add any special requests, allergens, or amendments for this item.</div>
     <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px">
-      <div style="font-size:0.68rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px">Course (for firing)</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${[['','None'],['starter','🥗 Starter'],['main','🍽 Main'],['dessert','🍨 Dessert']].map(([v,l])=>`<button id="cr-${v||'none'}" onclick="setCourse('${v}')" style="padding:5px 11px;border-radius:8px;border:1px solid ${item.course===v?'var(--accent)':'var(--border)'};background:${item.course===v?'rgba(255,107,53,0.12)':'var(--card)'};color:${item.course===v?'var(--accent)':'var(--text2)'};font-size:0.72rem;cursor:pointer;font-weight:${item.course===v?'700':'400'}">${l}</button>`).join('')}
-      </div>
-      <div style="font-size:0.68rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-top:4px">Quick Amendments</div>
+      <div style="font-size:0.68rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px">Quick Amendments</div>
       <div style="display:flex;flex-wrap:wrap;gap:5px" id="quick-amends">
         ${['No salt','No ice','Well done','Medium rare','Rare','Extra sauce','No sauce','Gluten free','Dairy free','Nut allergy','No onion','No garlic','Extra spicy','Mild','On the side','No dressing'].map(a=>`<button onclick="appendAmend('${a}')" style="padding:4px 9px;border-radius:14px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:0.7rem;cursor:pointer" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">${a}</button>`).join('')}
       </div>
@@ -1152,20 +915,8 @@ function addNote(idx){
     <div style="display:flex;gap:7px">
       <button class="btn btn-o" style="flex:1" onclick="clearAmend(${idx})">🗑 Clear</button>
       <button class="btn btn-o" style="flex:1" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-a" style="flex:2" onclick="saveAmend(${idx})">✓ Save</button>
+      <button class="btn btn-a" style="flex:2" onclick="saveAmend(${idx})">✓ Save Note</button>
     </div>`);
-  window._editCourse=item.course||'';
-  window.setCourse=function(v){
-    window._editCourse=v;
-    [['','none'],['starter','starter'],['main','main'],['dessert','dessert']].forEach(([val,sfx])=>{
-      const b=document.getElementById('cr-'+sfx);if(!b)return;
-      const on=val===v;
-      b.style.borderColor=on?'var(--accent)':'var(--border)';
-      b.style.background=on?'rgba(255,107,53,0.12)':'var(--card)';
-      b.style.color=on?'var(--accent)':'var(--text2)';
-      b.style.fontWeight=on?'700':'400';
-    });
-  };
 }
 
 window.appendAmend=function(txt){
@@ -1178,16 +929,14 @@ window.saveAmend=function(idx){
   if(!S.selTable)return;
   const o=DB.get('tOrders');const item=o[S.selTable].items[idx];if(!item)return;
   item.note=document.getElementById('amend-txt')?.value.trim()||'';
-  if(typeof window._editCourse!=='undefined')item.course=window._editCourse;
   DB.set('tOrders',o);closeModal();renderOP();
-  const parts=[];if(item.note)parts.push(item.note);if(item.course)parts.push(item.course);
-  if(parts.length)toast('Saved: '+parts.join(' · '),'📝','t-b');
+  if(item.note)toast('Amendment saved: '+item.note,'📝','t-b');
 };
 
 window.clearAmend=function(idx){
   if(!S.selTable)return;
   const o=DB.get('tOrders');const item=o[S.selTable].items[idx];if(!item)return;
-  item.note='';item.course='';DB.set('tOrders',o);closeModal();renderOP();
+  item.note='';DB.set('tOrders',o);closeModal();renderOP();
   toast('Amendment cleared','🗑','t-o');
 };
 
@@ -1224,8 +973,7 @@ function renderOP(){
       </div>
       <div class="oi-info">
         <div class="oi-nm">${item.emoji} ${esc(item.name)}</div>
-        <div class="oi-dest ${item.dest}">${item.sent?'✓ Sent':'→'} ${item.dest}${item.course?`<span class="course-tag course-${item.course==='starter'?'s':item.course==='main'?'m':'d'}">${item.course}</span>`:''}</div>
-        ${item.hhApplied?`<div style="font-size:0.55rem;color:var(--gold)">🎉 Happy Hour</div>`:''}
+        <div class="oi-dest ${item.dest}">${item.sent?'✓ Sent':'→'} ${item.dest}</div>
       </div>
       <div class="oi-pr">${fmt(item.price*item.qty)}</div>
       <div title="Add amendment" onclick="addNote(${idx})" style="cursor:pointer;font-size:0.82rem;padding:2px 5px;border-radius:6px;background:${item.note?'rgba(255,107,53,0.15)':'var(--card)'};border:1px solid ${item.note?'var(--accent)':'var(--border)'};color:${item.note?'var(--accent)':'var(--text2)'};margin-left:1px">📝</div>
@@ -1293,49 +1041,9 @@ function sendK(){
   const o=DB.get('tOrders');const ord=o[S.selTable];
   const un=ord.items.filter(i=>i.dest==='kitchen'&&!i.sent);
   if(!un.length){toast('No unsent kitchen items','ℹ️','t-b');return;}
-  // If any items have a course tag, offer course-fire picker
-  const hasCourses=un.some(i=>i.course);
-  if(hasCourses){
-    const courses=[...new Set(un.map(i=>i.course||'').filter(Boolean))].sort();
-    const noTag=un.filter(i=>!i.course);
-    showModal(`<div class="modal-t">🍽 Fire Which Course?</div>
-      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:12px">Choose which course to send to kitchen now. Remaining courses stay held.</div>
-      <div style="display:flex;flex-direction:column;gap:7px">
-        ${courses.map(c=>{
-          const citems=un.filter(i=>i.course===c);
-          const label=c==='starter'?'🥗 Starters':c==='main'?'🍽 Mains':c==='dessert'?'🍨 Desserts':'📋 '+c;
-          return`<button class="fire-btn" style="background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;text-align:left;width:100%" onclick="fireCourse('${c}')">
-            <div style="font-weight:700;font-size:0.82rem">${label} — Fire Now</div>
-            <div style="font-size:0.64rem;color:var(--text2);margin-top:2px">${citems.map(i=>i.qty+'× '+i.name).join(', ')}</div>
-          </button>`;
-        }).join('')}
-        ${noTag.length?`<button class="fire-btn" style="background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;text-align:left;width:100%" onclick="fireCourse('__all__')">
-          <div style="font-weight:700;font-size:0.82rem">🔥 Fire Everything</div>
-          <div style="font-size:0.64rem;color:var(--text2);margin-top:2px">All ${un.length} unsent kitchen items</div>
-        </button>`:''}
-      </div>
-      <button class="btn btn-o" style="width:100%;margin-top:10px" onclick="closeModal()">Cancel</button>`);
-    return;
-  }
-  // No courses — send all as before
   const k=DB.get('kOrders');k.push({id:nid(),table:S.selTable,items:un.map(i=>({...i})),status:'new',time:Date.now(),staff:S.user?.name,covers:ord.covers||1,note:ord.note||'',orderType:ord.orderType||'dineIn'});
   DB.set('kOrders',k);un.forEach(i=>{const x=ord.items.find(x=>x.id===i.id&&!x.sent);if(x)x.sent=true;});
   DB.set('tOrders',o);renderOP();renderTG();updBadges();toast(un.length+' item(s) → Kitchen','🍳','t-g');
-}
-
-function fireCourse(course){
-  closeModal();
-  const o=DB.get('tOrders');const ord=o[S.selTable];
-  const un=ord.items.filter(i=>i.dest==='kitchen'&&!i.sent);
-  const toFire=course==='__all__'?un:un.filter(i=>i.course===course);
-  if(!toFire.length){toast('Nothing to fire','ℹ️','t-b');return;}
-  const k=DB.get('kOrders');
-  const courseLabel=course==='__all__'?'All':course==='starter'?'Starters':course==='main'?'Mains':course==='dessert'?'Desserts':course;
-  k.push({id:nid(),table:S.selTable,items:toFire.map(i=>({...i})),status:'new',time:Date.now(),staff:S.user?.name,covers:ord.covers||1,note:ord.note||'',orderType:ord.orderType||'dineIn',courseLabel});
-  DB.set('kOrders',k);
-  toFire.forEach(fi=>{const x=ord.items.find(x=>x.id===fi.id&&!x.sent&&x.course===fi.course);if(x)x.sent=true;});
-  DB.set('tOrders',o);renderOP();renderTG();updBadges();
-  toast(toFire.length+' × '+courseLabel+' → Kitchen 🔥','🍳','t-g');
 }
 
 function sendBr(){
@@ -1356,18 +1064,13 @@ function openPay(){
   const o=DB.get('tOrders');const ord=o[S.selTable];
   if(!ord?.items?.length){toast('No items in order','⚠️','t-o');return;}
   const t=calcTotal(ord.items,ord.discPct||0);
-  let pm='card';let voucherApplied=0;
+  let pm='card';
   const otLabel=ord.orderType==='takeaway'?'🥡 Takeaway':'🍽 Eat In';
   showModal(`<div class="modal-t">💳 Payment — ${S.selTable}</div>
     <div style="text-align:center;margin-bottom:13px">
       <div style="font-size:0.73rem;color:var(--text2)">${ord.items.length} items · ${ord.covers||1} covers · <span style="color:${ord.orderType==='takeaway'?'#ffa500':'var(--blue)'};font-weight:700">${otLabel}</span></div>
-      <div id="pay-total-lbl" style="font-family:'Bebas Neue';font-size:2.9rem;color:var(--accent)">${fmt(t.grand)}</div>
+      <div style="font-family:'Bebas Neue';font-size:2.9rem;color:var(--accent)">${fmt(t.grand)}</div>
     </div>
-    <div id="voucher-row" style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
-      <input class="si" id="voucher-code" placeholder="Gift voucher code..." style="flex:1;font-family:'JetBrains Mono';letter-spacing:2px;text-transform:uppercase">
-      <button class="btn btn-o" style="font-size:0.72rem;padding:5px 11px" onclick="applyVoucher()">Apply</button>
-    </div>
-    <div id="voucher-status" style="font-size:0.68rem;margin-bottom:6px;min-height:16px"></div>
     <div class="pay-ms">
       <div class="pay-opt on" id="pm-card" onclick="selPM('card')"><div class="pay-ic">💳</div><div class="pay-lb">Card</div><div class="pay-sb">SumUp</div></div>
       <div class="pay-opt" id="pm-cash" onclick="selPM('cash')"><div class="pay-ic">💵</div><div class="pay-lb">Cash</div></div>
@@ -1377,39 +1080,22 @@ function openPay(){
     <div id="pd"><div class="sumup-box"><div class="sumup-logo">SumUp</div><div class="sumup-amt">${fmt(t.grand)}</div><div style="font-size:0.73rem;color:var(--text2)">Tap, insert or swipe card...</div></div></div>
     <div style="display:flex;gap:7px;margin-top:7px">
       <button class="btn btn-o" style="flex:1" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-g" style="flex:2" id="pay-btn" onclick="procPay(Math.max(0,${t.grand}-voucherApplied).toFixed(2))">Charge ${fmt(t.grand)}</button>
+      <button class="btn btn-g" style="flex:2" id="pay-btn" onclick="procPay(${t.grand.toFixed(2)})">Charge ${fmt(t.grand)}</button>
     </div>`);
 
-  window.applyVoucher=()=>{
-    const code=(document.getElementById('voucher-code')?.value||'').trim().toUpperCase();
-    const vouchers=DB.get('vouchers')||[];
-    const v=vouchers.find(x=>x.code===code&&!x.used&&x.balance>0);
-    const st=document.getElementById('voucher-status');
-    const btn=document.getElementById('pay-btn');
-    if(!v){if(st)st.innerHTML='<span style="color:var(--red)">❌ Invalid or already used code</span>';return;}
-    voucherApplied=Math.min(v.balance,t.grand);
-    const newTotal=Math.max(0,t.grand-voucherApplied);
-    if(st)st.innerHTML=`<span style="color:var(--green)">✅ £${voucherApplied.toFixed(2)} voucher applied${newTotal===0?' — fully covered!':' — remaining: '+fmt(newTotal)}</span>`;
-    const tl=document.getElementById('pay-total-lbl');
-    if(tl)tl.innerHTML=newTotal===0?`<span style="color:var(--green)">${fmt(0)} 🎉</span>`:`${fmt(newTotal)} <span style="font-size:1.2rem;color:var(--green)">(-${fmt(voucherApplied)})</span>`;
-    if(btn)btn.textContent='Charge '+fmt(newTotal);
-    window._activeVoucher={code,applied:voucherApplied,v};
-  };
-
   window.selPM=m=>{pm=m;document.querySelectorAll('.pay-opt').forEach(el=>el.classList.remove('on'));document.getElementById('pm-'+m)?.classList.add('on');
-    const effective=Math.max(0,t.grand-(voucherApplied||0));
     let d='';
-    if(m==='card')d=`<div class="sumup-box"><div class="sumup-logo">SumUp</div><div class="sumup-amt">${fmt(effective)}</div><div style="font-size:0.73rem;color:var(--text2)">Waiting for card...</div></div>`;
+    if(m==='card')d=`<div class="sumup-box"><div class="sumup-logo">SumUp</div><div class="sumup-amt">${fmt(t.grand)}</div><div style="font-size:0.73rem;color:var(--text2)">Waiting for card...</div></div>`;
     else if(m==='cash')d=`<div style="display:flex;flex-direction:column;gap:7px">
-      <div style="display:flex;justify-content:space-between;font-size:0.79rem"><span style="color:var(--text2)">Total</span><strong>${fmt(effective)}</strong></div>
+      <div style="display:flex;justify-content:space-between;font-size:0.79rem"><span style="color:var(--text2)">Total</span><strong>${fmt(t.grand)}</strong></div>
       <div style="display:flex;justify-content:space-between;font-size:0.79rem"><span style="color:var(--text2)">Tendered</span><strong id="ctnd">${fmt(0)}</strong></div>
       <div style="display:flex;justify-content:space-between;font-size:0.79rem"><span style="color:var(--text2)">Change</span><strong id="cchng" style="color:var(--green)">${fmt(0)}</strong></div>
-      <div class="cash-g">${[5,10,20,50].map(v=>`<button class="ck" onclick="csh(${v})">${fmt(v)}</button>`).join('')}<button class="ck" style="grid-column:span 4;color:var(--accent)" onclick="csh(${effective.toFixed(2)})">Exact ${fmt(effective)}</button></div>
+      <div class="cash-g">${[5,10,20,50].map(v=>`<button class="ck" onclick="csh(${v})">${fmt(v)}</button>`).join('')}<button class="ck" style="grid-column:span 4;color:var(--accent)" onclick="csh(${t.grand.toFixed(2)})">Exact ${fmt(t.grand)}</button></div>
     </div>`;
     else if(m==='tab')d=`<div style="text-align:center;padding:13px;color:var(--text2);font-size:0.76rem">Tab stays open for later payment.</div>`;
-    else if(m==='split'){const w=parseInt(prompt('Split ways?','2'))||2;const ea=effective/w;d=`<div style="text-align:center;padding:10px"><div style="font-family:'Bebas Neue';font-size:2.2rem;color:var(--accent)">${fmt(ea)}</div><div style="font-size:0.73rem;color:var(--text2)">per person (${w} ways)</div></div>`;}
+    else if(m==='split'){const w=parseInt(prompt('Split ways?','2'))||2;const ea=t.grand/w;d=`<div style="text-align:center;padding:10px"><div style="font-family:'Bebas Neue';font-size:2.2rem;color:var(--accent)">${fmt(ea)}</div><div style="font-size:0.73rem;color:var(--text2)">per person (${w} ways)</div></div>`;}
     document.getElementById('pd').innerHTML=d;
-    window.csh=v=>{const ch=Math.max(0,v-effective);document.getElementById('ctnd').textContent=fmt(parseFloat(v));document.getElementById('cchng').textContent=fmt(ch);};
+    window.csh=v=>{const ch=Math.max(0,v-t.grand);document.getElementById('ctnd').textContent=fmt(parseFloat(v));document.getElementById('cchng').textContent=fmt(ch);};
   };
 
   window.procPay=amt=>{
@@ -1417,63 +1103,15 @@ function openPay(){
     const btn=document.getElementById('pay-btn');if(btn){btn.textContent='Processing...';btn.disabled=true;}
     setTimeout(()=>{
       const o=DB.get('tOrders');
-      const cfg=DB.get('cfg');
-      const tx={id:nid(),table:S.selTable,amount:parseFloat(amt),method:pm,items:JSON.parse(JSON.stringify(o[S.selTable].items)),staff:S.user?.name,time:Date.now(),covers:o[S.selTable].covers||1,discPct:o[S.selTable].discPct||0,orderType:o[S.selTable].orderType||'dineIn',voucherApplied:voucherApplied||0};
-      // Mark voucher as used / reduce balance
-      if(window._activeVoucher){
-        const vouchers=DB.get('vouchers')||[];
-        const vi=vouchers.findIndex(x=>x.code===window._activeVoucher.code);
-        if(vi>-1){vouchers[vi].balance=Math.max(0,vouchers[vi].balance-window._activeVoucher.applied);if(vouchers[vi].balance===0)vouchers[vi].used=true;DB.set('vouchers',vouchers);}
-        window._activeVoucher=null;
-      }
+      const tx={id:nid(),table:S.selTable,amount:parseFloat(amt),method:pm,items:JSON.parse(JSON.stringify(o[S.selTable].items)),staff:S.user?.name,time:Date.now(),covers:o[S.selTable].covers||1,discPct:o[S.selTable].discPct||0,orderType:o[S.selTable].orderType||'dineIn'};
       const txns=DB.get('txns');txns.push(tx);DB.set('txns',txns);
       o[S.selTable]={items:[],covers:1,note:'',openedAt:Date.now()};DB.set('tOrders',o);
       S.selTable=null;closeModal();
       const otb=document.getElementById('otb');if(otb)otb.textContent='No Table';
       const cl=document.getElementById('cov-l');if(cl)cl.textContent='Select a table';
       renderOP();renderTG();toast(fmt(parseFloat(amt))+' — '+pm.toUpperCase()+' — Paid ✓','✅','t-g');
-      if(cfg.terminal?.printReceipt)printTransactionReceipt(tx,cfg);
     },900);
   };
-}
-
-function printTransactionReceipt(tx,cfg){
-  const t=calcTotal(tx.items,tx.discPct||0);
-  const menu=DB.get('menu');
-  const w=window.open('','_blank','width=400,height=700');
-  if(!w)return;
-  const rows=tx.items.map(i=>{
-    const mi=menu.find(m=>m.id===i.id)||{};
-    const allgs=(mi.allergens&&mi.allergens.length)?`<div style="font-size:10px;color:#666">⚠️ ${mi.allergens.join(', ')}</div>`:'';
-    return `<div style="display:flex;justify-content:space-between;margin:2px 0"><span>${i.qty} x ${i.name}</span><span>£${(i.price*i.qty).toFixed(2)}</span></div>${allgs}`;
-  }).join('');
-  const vatLine=cfg.vatNum?`<div class="center" style="font-size:10px">VAT Reg: ${cfg.vatNum}</div>`:'';
-  const vatAmt=tx.amount/(1+(cfg.vatRate||20)/100)*(cfg.vatRate||20)/100;
-  const netAmt=tx.amount-vatAmt;
-  w.document.write(`<html><head><style>body{font-family:monospace;font-size:13px;margin:10px}hr{border:1px dashed #000}.center{text-align:center}.big{font-size:18px;font-weight:bold}.row{display:flex;justify-content:space-between}</style></head><body>
-    ${cfg.venueLogo?`<div class="center"><img src="${cfg.venueLogo}" style="max-width:150px;max-height:60px;object-fit:contain"></div>`:''}
-    <div class="center big">${cfg.venueName||''}</div>
-    <div class="center">${cfg.venueAddr||''}</div>
-    <div class="center">${cfg.venueTel||''}</div>
-    ${vatLine}
-    <hr>
-    <div class="center">${tx.table} · ${tx.covers||1} cover(s) · ${tx.staff||''}</div>
-    <div class="center">${new Date(tx.time).toLocaleString('en-GB')}</div>
-    <div class="center">Receipt #${tx.id}</div>
-    <hr>
-    ${rows}
-    <hr>
-    <div class="row"><span>Net</span><span>£${netAmt.toFixed(2)}</span></div>
-    <div class="row"><span>VAT (${cfg.vatRate||20}%)</span><span>£${vatAmt.toFixed(2)}</span></div>
-    ${t.disc?`<div class="row"><span>Discount</span><span>-£${t.disc.toFixed(2)}</span></div>`:''}
-    ${t.svc?`<div class="row"><span>Service Charge</span><span>£${t.svc.toFixed(2)}</span></div>`:''}
-    <div class="row big"><span>TOTAL</span><span>£${tx.amount.toFixed(2)}</span></div>
-    <div class="row"><span>Paid by</span><span>${tx.method.toUpperCase()}</span></div>
-    <hr>
-    <div class="center">${cfg.receiptFooter||'Thank you!'}</div>
-    <script>window.print();setTimeout(()=>window.close(),2000);<\/script>
-  </body></html>`);
-  w.document.close();
 }
 
 // ═══════════════════════════════════════
@@ -1546,8 +1184,7 @@ function renderKV(){
       <div><div class="ks-n" style="color:var(--green)">${rd.length}</div><div class="ks-l">Ready</div></div>
     </div>
     <button class="btn btn-o" style="margin-left:10px;padding:5px 10px;font-size:0.68rem" onclick="clearRdyK()">Clear Ready</button>
-    <button class="btn btn-o" style="padding:5px 10px;font-size:0.68rem" onclick="showVoids()">📋 Voids</button>
-    <button class="btn btn-o" style="padding:5px 10px;font-size:0.68rem" onclick="showWasteLog()">🗑 Waste Log</button>`;
+    <button class="btn btn-o" style="padding:5px 10px;font-size:0.68rem" onclick="showVoids()">📋 Voids</button>`;
   const cols=document.getElementById('k-cols');if(!cols)return;
   const ec=`<div style="color:var(--text2);font-size:0.72rem;text-align:center;padding:18px;opacity:0.6">Empty</div>`;
   cols.innerHTML=`
@@ -1559,28 +1196,17 @@ function renderKV(){
 
 function kTkt(o){
   const mins=Math.floor((Date.now()-o.time)/60000);
-  const secs=Math.floor((Date.now()-o.time)/1000)%60;
   const tl=o.table.startsWith('B')?'Bar '+o.table.slice(1):'T'+o.table.slice(1);
   const urg=mins>15;
-  const prepCls=mins<10?'fresh':mins<20?'mid':'late';
-  const prepLbl=`<span class="kt-prep ${prepCls}">${mins}:${String(secs).padStart(2,'0')}</span>`;
   const otBadge=o.orderType==='takeaway'?`<span style="background:#ffa500;color:#000;border-radius:5px;padding:1px 5px;font-size:0.55rem;font-weight:700;margin-left:5px">🥡 TAKEAWAY</span>`:'';
-  const courseBadge=o.courseLabel?`<span style="background:rgba(74,158,255,0.2);color:var(--blue);border:1px solid rgba(74,158,255,0.35);border-radius:5px;padding:1px 6px;font-size:0.55rem;font-weight:700;margin-left:5px;text-transform:uppercase">${o.courseLabel}</span>`:'';
-  const menu=DB.get('menu');
   return`<div class="k-tkt" style="${urg?'border-color:rgba(255,69,96,0.4)':''}${o.orderType==='takeaway'?';border-color:rgba(255,165,0,0.5)':''}">
-    <div class="kt-h"><div class="kt-tbl">${tl}${otBadge}${courseBadge}</div><div class="kt-time${urg?' urg':''}">${prepLbl}</div></div>
+    <div class="kt-h"><div class="kt-tbl">${tl}${otBadge}</div><div class="kt-time${urg?' urg':''}">${mins}m${mins>15?' ⚠️':''}</div></div>
     ${o.note?`<div class="kt-note">📝 ${esc(o.note)}</div>`:''}
-    <div style="margin-bottom:7px">${o.items.map(i=>{
-      const mi=menu.find(m=>m.id===i.id)||{};
-      const allgStr=(mi.allergens&&mi.allergens.length)?`<div style="margin-left:22px;font-size:0.62rem;color:#ff6b35;background:rgba(255,107,53,0.1);border-left:2px solid var(--accent);padding:2px 6px;border-radius:0 4px 4px 0">⚠️ ${mi.allergens.join(' · ')}</div>`:'';
-      const ch25=i.alcohol?`<div style="margin-left:22px;font-size:0.62rem;color:var(--red);font-weight:700">🔞 ALCOHOL — ID CHECKED</div>`:'';
-      return`<div style="margin-bottom:4px"><div class="kt-it"><span class="kt-qty">${i.qty}x</span>${esc(i.name)}<button class="kt-86" onclick="eightySix('${i.id}','${esc(i.name)}',event)">86</button></div>${i.note?`<div style="margin-left:22px;font-size:0.66rem;color:#ffd700;background:rgba(255,215,0,0.1);border-left:2px solid #ffd700;padding:2px 6px;border-radius:0 4px 4px 0">📝 ${esc(i.note)}</div>`:''}${allgStr}${ch25}</div>`;
-    }).join('')}</div>
+    <div style="margin-bottom:7px">${o.items.map(i=>`<div style="margin-bottom:4px"><div class="kt-it"><span class="kt-qty">${i.qty}x</span>${esc(i.name)}</div>${i.note?`<div style="margin-left:22px;font-size:0.66rem;color:#ffd700;background:rgba(255,215,0,0.1);border-left:2px solid #ffd700;padding:2px 6px;border-radius:0 4px 4px 0">⚠️ ${esc(i.note)}</div>`:''}</div>`).join('')}</div>
     <div class="kt-acts">
       ${o.status==='new'?`<button class="kt-btn kbtn-s" onclick="kAct('${o.id}','cooking')">🔥 Start</button>`:''}
       ${o.status==='cooking'?`<button class="kt-btn kbtn-d" onclick="kAct('${o.id}','ready')">✅ Ready</button>`:''}
       ${o.status==='ready'?`<button class="kt-btn kbtn-b" onclick="kAct('${o.id}','bump')">BUMP</button>`:''}
-      <button class="kt-btn" style="background:rgba(255,69,96,0.12);border-color:var(--red);color:var(--red);max-width:48px" onclick="logWasteFromTkt('${o.id}')">🗑</button>
       <button class="kt-btn kbtn-r" style="max-width:38px" onclick="kAct('${o.id}','back')">↩</button>
     </div>
   </div>`;
@@ -1594,156 +1220,6 @@ function kAct(id,a){
   DB.set('kOrders',k);renderKV();
 }
 function clearRdyK(){DB.set('kOrders',DB.get('kOrders').filter(o=>o.status!=='ready'));renderKV();}
-
-// ── 86 / ITEM UNAVAILABILITY ─────────────────
-function eightySix(itemId,itemName,e){
-  e&&e.stopPropagation();
-  const menu=DB.get('menu');const idx=menu.findIndex(m=>m.id===itemId);
-  if(idx===-1){toast('Item not found in menu','⚠️','t-o');return;}
-  if(menu[idx].available===false){
-    // already 86'd — offer to restore
-    showModal(`<div class="modal-t">🔄 Restore Item?</div>
-      <div style="font-size:0.8rem;color:var(--text2);margin-bottom:14px"><strong style="color:var(--text)">${esc(itemName)}</strong> is currently <span style="color:var(--red);font-weight:700">86'd</span>. Mark it as available again?</div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-o" style="flex:1" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-g" style="flex:2" onclick="do86('${itemId}',true)">✅ Restore — Back on Menu</button>
-      </div>`);
-  } else {
-    showModal(`<div class="modal-t">🚫 86 — ${esc(itemName)}</div>
-      <div style="font-size:0.78rem;color:var(--text2);margin-bottom:14px">Mark this item as <strong style="color:var(--red)">sold out / unavailable</strong>? It will be hidden on the POS menu immediately across all stations.</div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-o" style="flex:1" onclick="closeModal()">Cancel</button>
-        <button class="btn" style="flex:2;background:var(--red);color:#fff;border-color:var(--red)" onclick="do86('${itemId}',false)">🚫 86 It — Remove from Menu</button>
-      </div>`);
-  }
-}
-function do86(itemId,restore){
-  const menu=DB.get('menu');const idx=menu.findIndex(m=>m.id===itemId);if(idx===-1)return;
-  menu[idx].available=restore;
-  DB.set('menu',menu);closeModal();renderMG();renderKV();renderMenuMgr();
-  toast(restore?menu[idx].name+' restored to menu':menu[idx].name+' 86\'d — removed from menu',restore?'✅':'🚫',restore?'t-g':'t-r');
-}
-
-// ── WASTE LOG ─────────────────────────────────
-function logWasteFromTkt(orderId){
-  const o=DB.get('kOrders').find(x=>x.id===orderId);if(!o)return;
-  const menu=DB.get('menu');
-  showModal(`<div class="modal-t">🗑 Log Waste — ${o.table.startsWith('B')?'Bar '+o.table.slice(1):'T'+o.table.slice(1)}</div>
-    <div style="font-size:0.72rem;color:var(--text2);margin-bottom:10px">Select item(s) that were wasted and the reason.</div>
-    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px" id="waste-items">
-      ${o.items.map(i=>{
-        const mi=menu.find(m=>m.id===i.id)||{cost:0};
-        return`<div class="allg-cb" onclick="this.classList.toggle('on')" data-id="${i.id}" data-name="${esc(i.name)}" data-cost="${mi.cost||0}" data-qty="${i.qty}">
-          <span style="font-size:1rem">${i.emoji||'🍽'}</span>
-          <span style="flex:1">${i.qty}× ${esc(i.name)}</span>
-          <span style="color:var(--red);font-size:0.7rem">${mi.cost?(fmt(mi.cost*i.qty)+' cost'):'no cost set'}</span>
-        </div>`;
-      }).join('')}
-    </div>
-    <div class="sf" style="margin-bottom:10px">
-      <label class="sl">Reason</label>
-      <select class="si" id="waste-reason">
-        <option>Dropped / Accident</option>
-        <option>Overcooked / Burnt</option>
-        <option>Wrong Order</option>
-        <option>Customer Returned</option>
-        <option>Expired / Spoiled</option>
-        <option>Other</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:7px">
-      <button class="btn btn-o" style="flex:1" onclick="closeModal()">Cancel</button>
-      <button class="btn" style="flex:2;background:var(--red);color:#fff;border-color:var(--red)" onclick="saveWaste()">🗑 Log Waste</button>
-    </div>`);
-}
-
-function logWasteDirect(){
-  const menu=DB.get('menu').filter(m=>m.available!==false);
-  showModal(`<div class="modal-t">🗑 Log Waste</div>
-    <div style="font-size:0.72rem;color:var(--text2);margin-bottom:10px">Log wasted stock directly without a kitchen ticket.</div>
-    <div class="sf"><label class="sl">Item</label>
-      <select class="si" id="wd-item">${menu.map(m=>`<option value="${m.id}" data-cost="${m.cost||0}">${esc(m.name)} — ${fmt(m.price)}</option>`).join('')}
-      </select>
-    </div>
-    <div class="sf"><label class="sl">Quantity</label><input class="si" type="number" id="wd-qty" value="1" min="1"></div>
-    <div class="sf"><label class="sl">Reason</label>
-      <select class="si" id="wd-reason">
-        <option>Dropped / Accident</option><option>Overcooked / Burnt</option><option>Wrong Order</option>
-        <option>Customer Returned</option><option>Expired / Spoiled</option><option>Other</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:7px;margin-top:10px">
-      <button class="btn btn-o" style="flex:1" onclick="closeModal()">Cancel</button>
-      <button class="btn" style="flex:2;background:var(--red);color:#fff;border-color:var(--red)" onclick="saveWasteDirect()">🗑 Log</button>
-    </div>`);
-}
-
-function saveWasteDirect(){
-  const sel=document.getElementById('wd-item');
-  const itemId=sel.value;const itemName=sel.options[sel.selectedIndex]?.text.split(' — ')[0]||'';
-  const qty=parseInt(document.getElementById('wd-qty')?.value)||1;
-  const cost=parseFloat(sel.options[sel.selectedIndex]?.dataset?.cost||0)*qty;
-  const reason=document.getElementById('wd-reason')?.value||'Other';
-  const w=DB.get('wasteLog');
-  w.push({id:nid(),itemId,itemName,qty,cost:+cost.toFixed(2),reason,staff:S.user?.name,time:Date.now()});
-  DB.set('wasteLog',w);closeModal();
-  toast(qty+'× '+itemName+' logged as waste ('+reason+')','🗑','t-r');
-}
-
-function saveWaste(){
-  const selected=[...document.querySelectorAll('#waste-items .allg-cb.on')];
-  if(!selected.length){toast('Select at least one item','⚠️','t-o');return;}
-  const reason=document.getElementById('waste-reason')?.value||'Other';
-  const w=DB.get('wasteLog');
-  selected.forEach(el=>{
-    w.push({id:nid(),itemId:el.dataset.id,itemName:el.dataset.name,qty:parseInt(el.dataset.qty)||1,cost:+((parseFloat(el.dataset.cost)||0)*parseInt(el.dataset.qty||1)).toFixed(2),reason,staff:S.user?.name,time:Date.now()});
-  });
-  DB.set('wasteLog',w);closeModal();
-  toast(selected.length+' item(s) logged as waste','🗑','t-r');
-}
-
-function showWasteLog(){
-  const log=(DB.get('wasteLog')||[]).slice().reverse();
-  const today=log.filter(w=>new Date(w.time).toDateString()===new Date().toDateString());
-  const totalCost=today.reduce((s,w)=>s+w.cost,0);
-  showModal(`<div class="modal-t">🗑 Waste Log</div>
-    <div style="display:flex;gap:10px;margin-bottom:12px">
-      <div style="background:rgba(255,69,96,0.1);border:1px solid rgba(255,69,96,0.3);border-radius:9px;padding:8px 14px;text-align:center;flex:1">
-        <div style="font-size:1.1rem;font-weight:700;color:var(--red)">${fmt(totalCost)}</div>
-        <div style="font-size:0.6rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px">Today's Waste Cost</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px 14px;text-align:center;flex:1">
-        <div style="font-size:1.1rem;font-weight:700;color:var(--text)">${today.length}</div>
-        <div style="font-size:0.6rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px">Items Wasted</div>
-      </div>
-      <button class="btn btn-o" style="font-size:0.68rem;padding:6px 10px" onclick="logWasteDirect()">+ Log</button>
-    </div>
-    <div style="max-height:320px;overflow-y:auto">
-      ${log.length?log.slice(0,40).map(w=>`<div class="waste-row">
-        <div class="waste-em">🗑</div>
-        <div class="waste-info">
-          <div style="font-weight:600">${w.qty}× ${w.itemName}</div>
-          <div style="color:var(--text2);font-size:0.66rem">${w.reason} · ${w.staff||'—'} · ${new Date(w.time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div>
-        </div>
-        <div class="waste-cost">${w.cost?'-'+fmt(w.cost):''}</div>
-      </div>`).join(''):'<div style="text-align:center;color:var(--text2);padding:20px;font-size:0.78rem">No waste logged</div>'}
-    </div>
-    <div style="display:flex;gap:7px;margin-top:10px">
-      <button class="btn btn-o" style="flex:1" onclick="expWaste()">📤 Export</button>
-      <button class="btn btn-o" style="flex:1" onclick="closeModal()">Close</button>
-    </div>`);
-}
-
-function expWaste(){
-  const log=DB.get('wasteLog')||[];
-  const r=[['Date','Time','Item','Qty','Cost (£)','Reason','Staff']];
-  log.forEach(w=>{
-    const d=new Date(w.time);
-    r.push([d.toLocaleDateString('en-GB'),d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),w.itemName,w.qty,(w.cost||0).toFixed(2),w.reason,w.staff||'']);
-  });
-  dl(r.map(row=>row.map(c=>`"${c}"`).join(',')).join('\n'),'text/csv','waste_log_'+new Date().toISOString().slice(0,10)+'.csv');
-  toast('Waste log exported','📤','t-g');closeModal();
-}
 
 // ═══════════════════════════════════════
 // BAR STATION
@@ -1839,10 +1315,9 @@ function renderRPT(){
       </table>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-o" onclick="expCSV()">📤 MTD CSV Export</button>
+      <button class="btn btn-o" onclick="expCSV()">📤 Export CSV</button>
       <button class="btn btn-o" onclick="expJSON()">📦 Backup JSON</button>
       <button class="btn btn-o" onclick="showVoids()">📋 Void Log</button>
-      <button class="btn btn-o" onclick="showAgeLog()">🪪 Age Check Log</button>
       <button class="btn btn-r" style="margin-left:auto" onclick="if(confirm('End of day? Closes all orders.'))eod()">🔒 End of Day</button>
     </div>`;
 }
@@ -1882,11 +1357,9 @@ function testPrint(type){
     // Browser print fallback (works in all browsers)
     const w=window.open('','_blank','width=400,height=600');
     if(w){w.document.write(`<html><head><style>body{font-family:monospace;font-size:13px;margin:10px}hr{border:1px dashed #000}.center{text-align:center}.big{font-size:18px;font-weight:bold}</style></head><body>
-      ${cfg.venueLogo?`<div class="center"><img src="${cfg.venueLogo}" style="max-width:160px;max-height:70px;object-fit:contain;margin-bottom:4px"></div>`:''}
-      <div class="center big">${cfg.venueName||''}</div>
+      <div class="center big">${cfg.venueName||'CBSystem'}</div>
       <div class="center">${cfg.venueAddr||''}</div>
       <div class="center">${cfg.venueTel||''}</div>
-      ${cfg.vatNum?`<div class="center" style="font-size:11px">VAT Reg: ${cfg.vatNum}</div>`:''}
       <hr>
       <div class="center">*** TEST PRINT ***</div>
       <div class="center">${new Date().toLocaleString('en-GB')}</div>
@@ -1957,18 +1430,7 @@ function saveTerminal(){
   toast(`Payment terminal saved — ${t==='manual'?'Manual (any terminal)':t}`,'💳','t-g');
 }
 
-function expCSV(){
-  const cfg=DB.get('cfg');const vatR=(cfg.vatRate||20)/100;
-  const r=[['Date','Time','Receipt#','Table','Staff','Covers','Method','Net (excl VAT)','VAT Amount','VAT Rate %','Gross Total','Discount','Service Charge','VAT Reg']];
-  DB.get('txns').forEach(tx=>{
-    const d=new Date(tx.time);
-    const gross=tx.amount;const net=+(gross/(1+vatR)).toFixed(2);const vat=+(gross-net).toFixed(2);
-    const t=calcTotal(tx.items||[],tx.discPct||0);
-    r.push([d.toLocaleDateString('en-GB'),d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),tx.id||'',tx.table||'',tx.staff||'',tx.covers||1,tx.method||'',net,vat,cfg.vatRate||20,gross.toFixed(2),(t.disc||0).toFixed(2),(t.svc||0).toFixed(2),cfg.vatNum||'']);
-  });
-  dl(r.map(row=>row.map(c=>`"${c}"`).join(',')).join('\n'),'text/csv','cbsystem_MTD_'+new Date().toISOString().slice(0,10)+'.csv');
-  toast('MTD CSV exported','📤','t-g');
-}
+function expCSV(){const r=[['Time','Table','Amount','Method','Staff','Covers']];DB.get('txns').forEach(tx=>r.push([new Date(tx.time).toLocaleString('en-GB'),tx.table,tx.amount.toFixed(2),tx.method,tx.staff,tx.covers||1]));dl(r.map(row=>row.map(c=>`"${c}"`).join(',')).join('\n'),'text/csv','cbsystem_'+new Date().toISOString().slice(0,10)+'.csv');toast('CSV exported','📤','t-g');}
 function expJSON(){dl(JSON.stringify(DB.d,null,2),'application/json','cbsystem_bk_'+new Date().toISOString().slice(0,10)+'.json');toast('Backup exported','📦','t-g');}
 function eod(){DB.set('txns',[]);DB.set('kOrders',[]);DB.set('bOrders',[]);DB.set('tOrders',{});DB.set('voids',[]);toast('End of day complete','🔒','t-o');}
 function showVoids(){
@@ -1976,38 +1438,6 @@ function showVoids(){
   showModal(`<div class="modal-t">📋 Void Log</div>
     ${v.length?v.map(x=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.76rem"><div style="font-weight:600;color:var(--red)">${x.table} · ${x.staff} · ${new Date(x.time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div><div style="color:var(--text2)">${x.reason||'Removed'}${x.item?' — '+x.item.qty+'x '+x.item.name:''}</div></div>`).join(''):'<div style="color:var(--text2);text-align:center;padding:18px">No voids recorded</div>'}
     <button class="btn btn-o" style="width:100%;margin-top:11px" onclick="closeModal()">Close</button>`);
-}
-
-function showAgeLog(){
-  const log=(DB.get('ageChecks')||[]).slice(-30).reverse();
-  const menu=DB.get('menu');
-  showModal(`<div class="modal-t">🪪 Age Verification Log (Challenge 25)</div>
-    <div style="font-size:0.66rem;color:var(--text2);margin-bottom:10px">All age checks logged for licensing compliance. Keep this log for 12 months.</div>
-    ${log.length?log.map(x=>{
-      const mi=menu.find(m=>m.id===x.itemId)||{name:'Unknown item'};
-      return`<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:0.76rem">
-        <div style="font-weight:600;color:var(--green)">✅ ID Checked / Over 25</div>
-        <div style="color:var(--text2)">${mi.name} · ${x.table||'—'} · ${x.staff||'—'} · ${new Date(x.time).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'})}</div>
-      </div>`;
-    }).join(''):'<div style="color:var(--text2);text-align:center;padding:18px">No age checks recorded today</div>'}
-    <div style="display:flex;gap:7px;margin-top:11px">
-      <button class="btn btn-o" style="flex:1" onclick="expAgeLog()">📤 Export Log</button>
-      <button class="btn btn-o" style="flex:1" onclick="closeModal()">Close</button>
-    </div>`);
-}
-
-function expAgeLog(){
-  const log=DB.get('ageChecks')||[];
-  const menu=DB.get('menu');
-  const r=[['Date','Time','Item','Table','Staff']];
-  log.forEach(x=>{
-    const d=new Date(x.time);
-    const mi=menu.find(m=>m.id===x.itemId)||{name:'Unknown'};
-    r.push([d.toLocaleDateString('en-GB'),d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),mi.name,x.table||'',x.staff||'']);
-  });
-  dl(r.map(row=>row.map(c=>`"${c}"`).join(',')).join('\n'),'text/csv','age_checks_'+new Date().toISOString().slice(0,10)+'.csv');
-  toast('Age check log exported','📤','t-g');
-  closeModal();
 }
 
 // ═══════════════════════════════════════
@@ -2103,7 +1533,6 @@ function renderBK(){
         <div style="font-size:0.73rem;color:var(--text2)">${b.time}</div>
       </div>
       <div style="font-size:0.7rem;color:var(--text2);margin-top:3px">👥 ${b.covers} · 🪑 T${b.table||'?'} · 📞 ${b.phone||'—'}</div>
-      ${b.depositRequired>0?`<div style="font-size:0.66rem;margin-top:3px">${b.depositPaid>=b.depositRequired?`<span style="color:var(--green);font-weight:700">✅ Deposit paid £${b.depositPaid.toFixed(2)}</span>`:`<span style="color:var(--red);font-weight:700">⚠️ Deposit: £${(b.depositPaid||0).toFixed(2)} / £${b.depositRequired.toFixed(2)} — £${(b.depositRequired-(b.depositPaid||0)).toFixed(2)} outstanding</span>`}</div>`:''}
       ${b.notes?`<div style="font-size:0.66rem;color:var(--text2);margin-top:2px;font-style:italic">📝 ${esc(b.notes)}</div>`:''}
     </div>`).join(''):'<div style="text-align:center;color:var(--text2);font-size:0.8rem;padding:36px">No bookings for this day</div>'}`;
 }
@@ -2124,20 +1553,6 @@ function bkForm(id){
       <div class="bk-ff"><label class="bk-l">Table</label><select class="bk-s" id="bf-tb"><option value="">Auto</option>${Array.from({length:tc},(_,i)=>`<option value="${i+1}"${b?.table==i+1?' selected':''}>${i+1}</option>`).join('')}</select></div>
       <div class="bk-ff"><label class="bk-l">Status</label><select class="bk-s" id="bf-s">${['confirmed','pending','seated','cancelled'].map(s=>`<option value="${s}"${b?.status===s?' selected':''}>${s[0].toUpperCase()+s.slice(1)}</option>`).join('')}</select></div>
       <div class="bk-ff full"><label class="bk-l">Notes</label><input class="bk-i" id="bf-notes" value="${esc(b?.notes||'')}"></div>
-      <div class="bk-ff" style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px">
-        <label class="bk-l">Deposit Required (£)</label>
-        <input class="bk-i" id="bf-dep-req" type="number" min="0" step="0.01" placeholder="0.00" value="${b?.depositRequired||''}">
-      </div>
-      <div class="bk-ff" style="padding-top:10px">
-        <label class="bk-l">Deposit Paid (£)</label>
-        <input class="bk-i" id="bf-dep-paid" type="number" min="0" step="0.01" placeholder="0.00" value="${b?.depositPaid||''}">
-      </div>
-      <div class="bk-ff full" style="padding-top:2px">
-        <label class="bk-l">Deposit Method</label>
-        <select class="bk-s" id="bf-dep-mth">
-          ${['','Cash','Card','Bank Transfer','Online'].map(m=>`<option value="${m}"${b?.depositMethod===m?' selected':''}>${m||'— Select —'}</option>`).join('')}
-        </select>
-      </div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button class="btn btn-a" style="flex:2" onclick="bkSave('${id||''}')">💾 ${b?'Update':'Save'}</button>
@@ -2151,15 +1566,10 @@ function bkSave(id){
   const date=document.getElementById('bf-d').value;
   const covers=parseInt(document.getElementById('bf-c').value)||0;
   if(!name||!date||covers<1){toast('Fill: name, date, covers','⚠️','t-o');return;}
-  const depReq=parseFloat(document.getElementById('bf-dep-req')?.value)||0;
-  const depPaid=parseFloat(document.getElementById('bf-dep-paid')?.value)||0;
-  const depMth=document.getElementById('bf-dep-mth')?.value||'';
-  const bk={id:id||('BK'+Date.now()),name,phone:document.getElementById('bf-p').value.trim(),email:document.getElementById('bf-e').value.trim(),date,time:document.getElementById('bf-t').value,covers,table:document.getElementById('bf-tb').value,status:document.getElementById('bf-s').value,notes:document.getElementById('bf-notes').value.trim(),depositRequired:depReq,depositPaid:depPaid,depositMethod:depMth,depositBalance:+(depReq-depPaid).toFixed(2),createdAt:id?(DB.get('bkgs').find(b=>b.id===id)?.createdAt||Date.now()):Date.now()};
+  const bk={id:id||('BK'+Date.now()),name,phone:document.getElementById('bf-p').value.trim(),email:document.getElementById('bf-e').value.trim(),date,time:document.getElementById('bf-t').value,covers,table:document.getElementById('bf-tb').value,status:document.getElementById('bf-s').value,notes:document.getElementById('bf-notes').value.trim(),createdAt:id?(DB.get('bkgs').find(b=>b.id===id)?.createdAt||Date.now()):Date.now()};
   const bks=DB.get('bkgs');
   if(id){const i=bks.findIndex(b=>b.id===id);if(i>-1)bks[i]=bk;else bks.push(bk);}else bks.push(bk);
-  DB.set('bkgs',bks);closeModal();bkDate=new Date(date+'T12:00:00');renderBK();
-  const depMsg=depReq>0?(depPaid>=depReq?' ✅ Deposit paid':` ⚠️ £${(depReq-depPaid).toFixed(2)} deposit outstanding`):'';
-  toast((id?'Updated':'Saved')+' — '+name+depMsg,'📅','t-g');
+  DB.set('bkgs',bks);closeModal();bkDate=new Date(date+'T12:00:00');renderBK();toast((id?'Updated':'Saved')+' booking — '+name,'📅','t-g');
 }
 function bkSeat(id){const bks=DB.get('bkgs');const b=bks.find(x=>x.id===id);if(b){b.status='seated';DB.set('bkgs',bks);closeModal();renderBK();toast(b.name+' seated','🪑','t-g');}}
 function bkDel(id){if(!confirm('Delete booking?'))return;DB.set('bkgs',DB.get('bkgs').filter(b=>b.id!==id));closeModal();renderBK();toast('Booking deleted','🗑','t-o');}
@@ -2175,56 +1585,18 @@ function renderORpt(){
   const month=txns.filter(tx=>(Date.now()-new Date(tx.time))/864e5<30);
   const revT=today.reduce((s,t)=>s+t.amount,0);
   const cov=today.reduce((s,t)=>s+(t.covers||1),0);
-  const wasteToday=(DB.get('wasteLog')||[]).filter(w=>new Date(w.time).toDateString()===new Date().toDateString());
-  const wasteCost=wasteToday.reduce((s,w)=>s+(w.cost||0),0);
   const staffMap={};today.forEach(tx=>{if(!staffMap[tx.staff])staffMap[tx.staff]={n:tx.staff,c:0,r:0};staffMap[tx.staff].c++;staffMap[tx.staff].r+=tx.amount;});
   const catMap={};today.forEach(tx=>tx.items?.forEach(i=>{const m=DB.get('menu').find(x=>x.id===i.id)||{category:'Other',cost:0};if(!catMap[m.category])catMap[m.category]={rev:0,cost:0};catMap[m.category].rev+=i.price*i.qty;catMap[m.category].cost+=(m.cost||0)*i.qty;}));
   const maxC=Math.max(...Object.values(catMap).map(c=>c.rev),1);
   const gp=Object.values(catMap).reduce((s,c)=>s+(c.rev-c.cost),0);
   el.innerHTML=`<div class="ow-title">📈 Owner Reports</div>
     <div class="dash-g">
-      ${[{l:'Today',v:fmt(revT),s:today.length+' txns',c:'var(--accent)'},{l:'This Week',v:fmt(week.reduce((s,t)=>s+t.amount,0)),s:week.length+' txns',c:'var(--blue)'},{l:'This Month',v:fmt(month.reduce((s,t)=>s+t.amount,0)),s:month.length+' txns',c:'var(--purple)'},{l:'Avg Cover',v:fmt(cov?revT/cov:0),s:cov+' covers',c:'var(--green)'},{l:'Gross Profit',v:fmt(gp),s:'After food cost',c:'var(--green)'},{l:'Waste Today',v:fmt(wasteCost),s:wasteToday.length+' item(s)',c:'var(--red)'},{l:'Card %',v:today.length?Math.round(today.filter(t=>t.method==='card').length/today.length*100)+'%':'—',s:today.filter(t=>t.method==='card').length+' card txns',c:'var(--accent2)'}].map(c=>`<div class="dc"><div class="dc-l">${c.l}</div><div class="dc-v" style="color:${c.c}">${c.v}</div><div class="dc-s">${c.s}</div></div>`).join('')}
+      ${[{l:'Today',v:fmt(revT),s:today.length+' txns',c:'var(--accent)'},{l:'This Week',v:fmt(week.reduce((s,t)=>s+t.amount,0)),s:week.length+' txns',c:'var(--blue)'},{l:'This Month',v:fmt(month.reduce((s,t)=>s+t.amount,0)),s:month.length+' txns',c:'var(--purple)'},{l:'Avg Cover',v:fmt(cov?revT/cov:0),s:cov+' covers',c:'var(--green)'},{l:'Gross Profit',v:fmt(gp),s:'After food cost',c:'var(--green)'},{l:'Card %',v:today.length?Math.round(today.filter(t=>t.method==='card').length/today.length*100)+'%':'—',s:today.filter(t=>t.method==='card').length+' card txns',c:'var(--accent2)'}].map(c=>`<div class="dc"><div class="dc-l">${c.l}</div><div class="dc-v" style="color:${c.c}">${c.v}</div><div class="dc-s">${c.s}</div></div>`).join('')}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
       <div class="ow-card"><div class="oc-t">Revenue by Category</div><div class="chart-wrap">${Object.entries(catMap).sort((a,b)=>b[1].rev-a[1].rev).map(([cat,d])=>`<div class="chart-row"><div class="chart-l">${cat}</div><div class="chart-tr"><div class="chart-f" style="width:${(d.rev/maxC*100).toFixed(0)}%"></div></div><div class="chart-v">${fmt(d.rev)}</div></div>`).join('')||'<div style="color:var(--text2);font-size:0.75rem">No data</div>'}</div></div>
       <div class="ow-card"><div class="oc-t">Staff Performance</div><table class="data-t"><tr><th>Name</th><th>Txns</th><th>Revenue</th></tr>${Object.values(staffMap).sort((a,b)=>b.r-a.r).map(s=>`<tr><td>${s.n}</td><td>${s.c}</td><td style="color:var(--accent)">${fmt(s.r)}</td></tr>`).join('')||'<tr><td colspan="3" style="text-align:center;color:var(--text2)">No data</td></tr>'}</table></div>
     </div>
-    ${(()=>{
-      // Best sellers — count qty sold per item today
-      const itemMap={};
-      today.forEach(tx=>tx.items?.forEach(i=>{
-        if(!itemMap[i.id])itemMap[i.id]={name:i.name,emoji:i.emoji||'🍽',qty:0,rev:0};
-        itemMap[i.id].qty+=i.qty;itemMap[i.id].rev+=i.price*i.qty;
-      }));
-      const top=Object.values(itemMap).sort((a,b)=>b.qty-a.qty).slice(0,8);
-      const maxQ=Math.max(...top.map(x=>x.qty),1);
-      // Hourly revenue — bucket today's txns by hour
-      const hourMap={};
-      for(let h=0;h<24;h++)hourMap[h]=0;
-      today.forEach(tx=>{const h=new Date(tx.time).getHours();hourMap[h]+=tx.amount;});
-      const activeHours=Object.entries(hourMap).filter(([,v])=>v>0);
-      const maxH=Math.max(...Object.values(hourMap),1);
-      return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-        <div class="ow-card">
-          <div class="oc-t">🏆 Best Sellers — Today</div>
-          ${top.length?top.map((x,i)=>`<div class="chart-row">
-            <div class="chart-l" style="font-size:0.64rem">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'  '} ${x.emoji} ${x.name}</div>
-            <div class="chart-tr"><div class="chart-f" style="width:${(x.qty/maxQ*100).toFixed(0)}%;background:var(--${i<3?'accent':'blue'})"></div></div>
-            <div class="chart-v" style="font-size:0.62rem">${x.qty} sold · ${fmt(x.rev)}</div>
-          </div>`).join(''):'<div style="color:var(--text2);font-size:0.75rem;padding:8px">No sales yet today</div>'}
-        </div>
-        <div class="ow-card">
-          <div class="oc-t">📊 Hourly Revenue — Today</div>
-          <div style="display:flex;align-items:flex-end;gap:3px;height:90px;margin-top:6px">
-            ${Object.entries(hourMap).filter(([h])=>parseInt(h)>=6&&parseInt(h)<=23).map(([h,v])=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
-              <div title="${h}:00 — ${fmt(v)}" style="width:100%;background:${v>0?'var(--accent)':'var(--border)'};border-radius:3px 3px 0 0;height:${v>0?Math.max(4,(v/maxH*78)).toFixed(0):2}px;transition:height 0.3s"></div>
-              <div style="font-size:0.42rem;color:var(--text2)">${h}</div>
-            </div>`).join('')}
-          </div>
-          ${activeHours.length?`<div style="font-size:0.64rem;color:var(--text2);margin-top:6px">Peak: ${Object.entries(hourMap).sort((a,b)=>b[1]-a[1])[0][0]}:00 · ${fmt(Object.entries(hourMap).sort((a,b)=>b[1]-a[1])[0][1])}</div>`:'<div style="color:var(--text2);font-size:0.72rem;padding:8px 0">No data yet today</div>'}
-        </div>
-      </div>`;
-    })()}
     <div class="ow-card" style="margin-bottom:14px">
       <div class="oc-t">Void Log — Today</div>
       ${DB.get('voids').filter(v=>new Date(v.time).toDateString()===new Date().toDateString()).length?DB.get('voids').filter(v=>new Date(v.time).toDateString()===new Date().toDateString()).map(v=>`<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:0.74rem"><span style="color:var(--red);font-weight:600">${v.table}</span> · ${v.staff} · ${new Date(v.time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} · ${v.reason||'Removed'}${v.item?' — '+v.item.qty+'x '+v.item.name:''}</div>`).join(''):'<div style="color:var(--text2);text-align:center;padding:12px;font-size:0.74rem">No voids today</div>'}
@@ -2247,21 +1619,6 @@ function renderSet(){
       <div class="set-card">
         <div class="set-t">🏪 Venue</div>
         ${[['venueName','Venue Name'],['venueAddr','Address'],['venueTel','Phone'],['receiptFooter','Receipt Footer']].map(([k,l])=>`<div class="sf"><label class="sl">${l}</label><input class="si" id="s-${k}" value="${esc(cfg[k]||'')}"></div>`).join('')}
-        <div class="sf"><label class="sl">VAT Registration Number</label><input class="si" id="s-vatNum" value="${esc(cfg.vatNum||'')}" placeholder="GB 123 4567 89"></div>
-        <div style="font-size:0.62rem;color:var(--text2);margin:-6px 0 8px">Printed on VAT receipts (required by HMRC for receipts over £250)</div>
-        <div class="s-row"><div><div style="font-size:0.8rem">Challenge 25</div><div style="font-size:0.63rem;color:var(--text2)">Prompt staff to check ID when adding alcohol items</div></div><label class="tog"><input type="checkbox" id="s-ch25" ${cfg.challenge25!==false?'checked':''}><div class="tog-sl"></div></label></div>
-        <div class="sf">
-          <label class="sl">Venue Logo</label>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            ${cfg.venueLogo?`<img id="s-logo-preview" src="${cfg.venueLogo}" alt="Logo" style="height:40px;width:auto;max-width:120px;object-fit:contain;border-radius:6px;border:1px solid var(--border);">`:`<div id="s-logo-preview" style="height:40px;width:80px;border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:var(--text2)">No logo</div>`}
-            <label style="cursor:pointer">
-              <span class="btn btn-o" style="font-size:0.72rem;padding:4px 12px">📁 Upload Logo</span>
-              <input type="file" accept="image/*" style="display:none" onchange="uploadVenueLogo(this)">
-            </label>
-            ${cfg.venueLogo?`<button class="btn" style="font-size:0.72rem;padding:4px 10px;background:var(--red);color:#fff" onclick="removeVenueLogo()">✕ Remove</button>`:''}
-          </div>
-          <div style="font-size:0.6rem;color:var(--text2);margin-top:4px">PNG, JPG, SVG or WebP — shown on receipts, customer display & topbar</div>
-        </div>
         <div style="display:flex;gap:7px">
           <div class="sf" style="flex:1"><label class="sl">Tables</label><input class="si" id="s-tc" type="number" value="${cfg.tableCount||20}"></div>
           <div class="sf" style="flex:1"><label class="sl">Bar Seats</label><input class="si" id="s-bc" type="number" value="${cfg.barSeats||8}"></div>
@@ -2369,66 +1726,6 @@ function renderSet(){
       </div>
     </div>
 
-    <!-- STAFF CLOCK-IN -->
-    <div class="set-card" style="margin-bottom:12px">
-      <div class="set-t">🕐 Staff Clock-In / Hours</div>
-      <div style="font-size:0.76rem;color:var(--text2);margin-bottom:10px">Track shift start/end times per staff member. Useful for payroll and National Living Wage compliance.</div>
-      <div id="clock-in-panel">
-        ${(()=>{
-          const staff=DB.get('staff')||[];
-          const shifts=DB.get('shifts')||[];
-          const today=shifts.filter(s=>new Date(s.clockIn).toDateString()===new Date().toDateString());
-          if(!staff.length)return'<div style="font-size:0.72rem;color:var(--text2)">No staff set up — add staff in the Staff tab first.</div>';
-          return staff.map(s=>{
-            const active=today.find(sh=>sh.staffId===s.id&&!sh.clockOut);
-            const done=today.filter(sh=>sh.staffId===s.id&&sh.clockOut);
-            const totalMins=done.reduce((sum,sh)=>sum+Math.floor((sh.clockOut-sh.clockIn)/60000),0);
-            const hrs=Math.floor(totalMins/60);const mins=totalMins%60;
-            return`<div class="shift-row ${active?'shift-active':''}">
-              <div><div class="shift-name">${esc(s.name)}</div><div class="shift-time">${active?'Clocked in '+new Date(active.clockIn).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):done.length?hrs+'h '+mins+'m today':'Not clocked in'}</div></div>
-              ${active
-                ?`<button class="btn btn-r" style="font-size:0.68rem;padding:4px 10px" onclick="clockOut('${s.id}')">Clock Out</button>`
-                :`<button class="btn btn-g" style="font-size:0.68rem;padding:4px 10px" onclick="clockIn('${s.id}')">Clock In</button>`
-              }
-            </div>`;
-          }).join('');
-        })()}
-      </div>
-      <div style="display:flex;gap:7px;margin-top:10px">
-        <button class="btn btn-o" style="font-size:0.7rem;flex:1" onclick="showShiftReport()">📋 Shift Report</button>
-        <button class="btn btn-o" style="font-size:0.7rem;flex:1" onclick="expShifts()">📤 Export Hours</button>
-      </div>
-    </div>
-
-    <!-- TABLE TIMER -->
-    <div class="set-card" style="margin-bottom:12px">
-      <div class="set-t">⏱ Table Turn Alert</div>
-      <div style="font-size:0.76rem;color:var(--text2);margin-bottom:10px">Colour-code tables on the grid when they've been open too long. Helps maximise covers per night.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="sf"><label class="sl">🟠 Warn after (mins)</label><input class="si" type="number" id="tw-warn" value="${cfg.tableWarnMins||90}" min="10" max="300"></div>
-        <div class="sf"><label class="sl">🔴 Alert after (mins)</label><input class="si" type="number" id="tw-over" value="${cfg.tableOverMins||120}" min="10" max="300"></div>
-      </div>
-      <div style="font-size:0.62rem;color:var(--text2);margin:4px 0 10px">Orange = approaching limit · Red pulsing = over limit. Both visible on the table grid.</div>
-      <button class="btn btn-gold" style="width:100%" onclick="saveTableTimer()">💾 Save Timer Settings</button>
-    </div>
-
-    <!-- HAPPY HOUR -->
-    <div class="set-card" style="margin-bottom:12px">
-      <div class="set-t">🎉 Happy Hour</div>
-      <div style="font-size:0.76rem;color:var(--text2);margin-bottom:12px">Auto-applies a discount to bar items during set hours. Prices update live on the menu — no manual changes needed.</div>
-      <div class="s-row" style="margin-bottom:10px"><div><div style="font-size:0.8rem">Enable Happy Hour</div><div style="font-size:0.63rem;color:var(--text2)">Applies discount to all bar/drink items</div></div><label class="tog"><input type="checkbox" id="hh-on" ${(cfg.happyHour||{}).enabled?'checked':''}><div class="tog-sl"></div></label></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
-        <div class="sf"><label class="sl">Start Time</label><input class="si" type="time" id="hh-start" value="${String((cfg.happyHour||{}).startH||16).padStart(2,'0')}:${String((cfg.happyHour||{}).startM||0).padStart(2,'0')}"></div>
-        <div class="sf"><label class="sl">End Time</label><input class="si" type="time" id="hh-end" value="${String((cfg.happyHour||{}).endH||18).padStart(2,'0')}:${String((cfg.happyHour||{}).endM||0).padStart(2,'0')}"></div>
-        <div class="sf"><label class="sl">Discount %</label><input class="si" type="number" min="1" max="100" id="hh-disc" value="${(cfg.happyHour||{}).disc||50}"></div>
-      </div>
-      <div style="font-size:0.68rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Active Days</div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">
-        ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i)=>`<label style="cursor:pointer"><input type="checkbox" id="hh-d${i}" ${((cfg.happyHour||{}).days||[0,1,2,3,4,5,6]).includes(i)?'checked':''} style="display:none"><span id="hh-ds${i}" style="display:inline-block;padding:4px 10px;border-radius:8px;border:1px solid var(--border);font-size:0.7rem;cursor:pointer;background:${((cfg.happyHour||{}).days||[0,1,2,3,4,5,6]).includes(i)?'rgba(255,215,0,0.15)':'var(--card)'};color:${((cfg.happyHour||{}).days||[0,1,2,3,4,5,6]).includes(i)?'var(--gold)':'var(--text2)'}" onclick="toggleHHDay(${i})">${d}</span></label>`).join('')}
-      </div>
-      <button class="btn btn-gold" style="width:100%" onclick="saveHH()">💾 Save Happy Hour</button>
-    </div>
-
     <!-- PAYMENT TERMINAL -->
     <div class="set-card" style="margin-bottom:12px">
       <div class="set-t">💳 Payment Terminal</div>
@@ -2498,141 +1795,9 @@ function renderSet(){
         <button class="btn btn-o" style="font-size:0.7rem;padding:4px 10px" onclick="expMenu()">📤 Export</button>
         <button class="btn btn-o" style="font-size:0.7rem;padding:4px 10px" onclick="impMenu()">📥 Import</button>
       </div>
-      <div style="display:grid;grid-template-columns:25px 32px 1fr 85px 55px 58px 44px 36px 44px 24px;gap:4px;padding:3px 6px;font-size:0.56rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text2);border-bottom:1px solid var(--border);margin-bottom:4px"><div></div><div>Photo</div><div>Name</div><div>Category</div><div>Dest</div><div>Price</div><div>Avail</div><div>🍺18+</div><div>kcal</div><div></div></div>
+      <div style="display:grid;grid-template-columns:25px 32px 1fr 85px 55px 58px 44px 24px;gap:4px;padding:3px 6px;font-size:0.56rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text2);border-bottom:1px solid var(--border);margin-bottom:4px"><div></div><div>Photo</div><div>Name</div><div>Category</div><div>Dest</div><div>Price</div><div>Avail</div><div></div></div>
       <div id="menu-mgr"></div>
     </div>
-
-    <!-- SECTIONS / AREAS -->
-    <div class="set-card" style="margin-bottom:12px">
-      <div class="set-t">🗺 Sections & Areas</div>
-      <div style="font-size:0.76rem;color:var(--text2);margin-bottom:10px">Add custom sections (Garden, Function Room, Terrace…). Each gets its own tab and table grid on the POS.</div>
-      <div id="sections-list" style="margin-bottom:10px">
-        ${(DB.get('cfg').sections||[]).map((s,i)=>`<div style="display:flex;gap:7px;align-items:center;margin-bottom:6px">
-          <input class="si" value="${s.emoji}" maxlength="2" style="width:38px;text-align:center;font-size:1rem" id="sec-em-${i}">
-          <input class="si" value="${esc(s.label)}" style="flex:1" id="sec-lb-${i}">
-          <input class="si" type="number" min="1" max="60" value="${s.count||20}" style="width:52px" title="Number of tables/seats" id="sec-ct-${i}">
-          ${i>1?`<button onclick="delSection(${i})" style="background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:1.1rem;padding:4px 7px">✕</button>`:'<div style="width:32px"></div>'}
-        </div>`).join('')}
-      </div>
-      <div style="display:flex;gap:7px">
-        <button class="btn btn-o" style="font-size:0.72rem" onclick="addSection()">+ Add Section</button>
-        <button class="btn btn-gold" style="flex:1;font-size:0.72rem" onclick="saveSections()">💾 Save Sections</button>
-      </div>
-      <div style="font-size:0.6rem;color:var(--text2);margin-top:6px">First two sections are always Restaurant & Bar. Add extras below them.</div>
-    </div>
-
-    <!-- GIFT VOUCHERS -->
-    <div class="set-card" style="margin-bottom:12px">
-      <div class="set-t">🎁 Gift Vouchers</div>
-      <div style="font-size:0.76rem;color:var(--text2);margin-bottom:12px">Generate voucher codes to sell or give away. Staff enter the code at payment to redeem.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:7px;margin-bottom:10px;align-items:end">
-        <div class="sf"><label class="sl">Value (£)</label><input class="si" type="number" id="v-amount" min="1" placeholder="e.g. 25"></div>
-        <div class="sf"><label class="sl">Custom code (optional)</label><input class="si" id="v-code" placeholder="Auto-generated" style="text-transform:uppercase;font-family:'JetBrains Mono'"></div>
-        <button class="btn btn-g" style="padding:8px 14px;font-size:0.76rem" onclick="genVoucher()">+ Generate</button>
-      </div>
-      <div id="voucher-list" style="max-height:220px;overflow-y:auto">
-        ${(()=>{
-          const vs=DB.get('vouchers')||[];
-          if(!vs.length)return'<div style="color:var(--text2);font-size:0.72rem;text-align:center;padding:12px">No vouchers yet</div>';
-          return vs.slice().reverse().map(v=>`<div class="voucher-card">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div class="voucher-code">${v.code}</div>
-              <div style="display:flex;gap:6px;align-items:center">
-                <span style="font-size:0.82rem;font-weight:700;color:${v.used?'var(--text2)':'var(--green)'}">£${(v.balance||0).toFixed(2)}</span>
-                ${v.used?'<span style="font-size:0.6rem;color:var(--text2);background:var(--bg2);padding:2px 7px;border-radius:5px">USED</span>':''}
-                <button onclick="delVoucher('${v.code}')" style="font-size:0.65rem;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:2px 5px" title="Delete">✕</button>
-              </div>
-            </div>
-            <div class="voucher-meta">Created ${new Date(v.created).toLocaleDateString('en-GB')} · Original value £${(v.original||v.balance||0).toFixed(2)}</div>
-          </div>`).join('');
-        })()}
-      </div>
-    </div>
-
-    <!-- HOSTING & DEPLOYMENT GUIDE -->
-    <div class="set-card" style="margin-bottom:12px">
-      <div class="set-t">🚀 Hosting & Deployment</div>
-      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:14px">Host CBSystem PRO for free on GitHub Pages + Supabase so all your devices stay in sync.</div>
-
-      <!-- Tab switcher -->
-      <div style="display:flex;gap:6px;margin-bottom:14px">
-        <button class="btn" id="dep-tab-gh" onclick="depTab('gh')" style="font-size:0.7rem;padding:5px 14px;background:var(--accent);color:#fff">GitHub Pages</button>
-        <button class="btn btn-o" id="dep-tab-sb" onclick="depTab('sb')" style="font-size:0.7rem;padding:5px 14px">Supabase</button>
-        <button class="btn btn-o" id="dep-tab-qr" onclick="depTab('qr')" style="font-size:0.7rem;padding:5px 14px">Self-Order URL</button>
-      </div>
-
-      <!-- GitHub Pages steps -->
-      <div id="dep-gh">
-        <div style="display:flex;flex-direction:column;gap:10px">
-          ${[
-            ['1','Create a free GitHub account','Go to <a href="https://github.com" target="_blank" style="color:var(--accent)">github.com</a> → Sign up (free). Skip if you already have one.'],
-            ['2','Create a new repository','Click <strong style="color:var(--text)">＋ New</strong> (top right) → Name it <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">cbsystem-pro</code> → Set to <strong style="color:var(--text)">Public</strong> → Click <strong style="color:var(--text)">Create repository</strong>.'],
-            ['3','Upload your files','On the repo page click <strong style="color:var(--text)">uploading an existing file</strong> → Drag & drop both <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">cbsystem13.html</code> and <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">self-order.html</code> → Click <strong style="color:var(--text)">Commit changes</strong>.'],
-            ['4','Rename main file to index.html','In the repo, click <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">cbsystem13.html</code> → pencil icon (edit) → change filename at top to <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">index.html</code> → Commit. This makes it the default page.'],
-            ['5','Enable GitHub Pages','Go to repo <strong style="color:var(--text)">Settings</strong> → <strong style="color:var(--text)">Pages</strong> (left sidebar) → Source: <strong style="color:var(--text)">Deploy from a branch</strong> → Branch: <strong style="color:var(--text)">main</strong> → folder: <strong style="color:var(--text)">/ (root)</strong> → Click <strong style="color:var(--text)">Save</strong>.'],
-            ['6','Your live URL is ready','After ~60 seconds your app is live at <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">https://yourusername.github.io/cbsystem-pro/</code>. Share this URL with all your devices — open it, then install via the browser menu.'],
-          ].map(([n,title,desc])=>`
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <div style="min-width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;flex-shrink:0;margin-top:1px">${n}</div>
-            <div>
-              <div style="font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:2px">${title}</div>
-              <div style="font-size:0.69rem;color:var(--text2);line-height:1.55">${desc}</div>
-            </div>
-          </div>`).join('')}
-        </div>
-        <div style="margin-top:14px;padding:10px 13px;background:rgba(45,212,160,0.07);border:1px solid rgba(45,212,160,0.2);border-radius:10px;font-size:0.68rem;color:var(--green);line-height:1.6">
-          ✅ <strong>Free forever</strong> — GitHub Pages is completely free for public repos. Your app is accessible from any browser, on any device, anywhere.
-        </div>
-      </div>
-
-      <!-- Supabase steps -->
-      <div id="dep-sb" style="display:none">
-        <div style="display:flex;flex-direction:column;gap:10px">
-          ${[
-            ['1','Create a free Supabase account','Go to <a href="https://supabase.com" target="_blank" style="color:var(--accent)">supabase.com</a> → Sign up with GitHub (easiest) → Free tier gives you 2 projects.'],
-            ['2','Create a new project','Click <strong style="color:var(--text)">New Project</strong> → Choose your organisation → Name it <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">cbsystem</code> → Set a database password → Click <strong style="color:var(--text)">Create new project</strong>. Wait ~2 minutes.'],
-            ['3','Get your API keys','In your project go to <strong style="color:var(--text)">Settings</strong> (⚙️) → <strong style="color:var(--text)">API</strong> → Copy your <strong style="color:var(--text)">Project URL</strong> and <strong style="color:var(--text)">anon public</strong> key.'],
-            ['4','Run the setup SQL','In Supabase go to <strong style="color:var(--text)">SQL Editor</strong> → Click <strong style="color:var(--text)">New query</strong> → Paste the SQL from the button below and click <strong style="color:var(--text)">Run</strong>.'],
-            ['5','Enter keys in CBSystem','Go to <strong style="color:var(--text)">Settings → Cloud & Sync</strong> above → Switch to <strong style="color:var(--text)">Supabase Cloud</strong> → Paste your URL and anon key → Set a Sync Code (e.g. <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">my-restaurant</code>) → Save & Connect.'],
-            ['6','All devices sync automatically','Open your GitHub Pages URL on every device (till, kitchen tablet, waiter phone) → Go to Settings → enter the same URL, key, and Sync Code → all devices share live data.'],
-          ].map(([n,title,desc])=>`
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <div style="min-width:24px;height:24px;border-radius:50%;background:var(--green);color:#07070d;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;flex-shrink:0;margin-top:1px">${n}</div>
-            <div>
-              <div style="font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:2px">${title}</div>
-              <div style="font-size:0.69rem;color:var(--text2);line-height:1.55">${desc}</div>
-            </div>
-          </div>`).join('')}
-        </div>
-        <button class="btn btn-b" style="width:100%;margin-top:12px;font-size:0.72rem" onclick="showCloudSetup()">📋 Copy Supabase SQL Setup</button>
-        <div style="margin-top:10px;padding:10px 13px;background:rgba(74,158,255,0.07);border:1px solid rgba(74,158,255,0.2);border-radius:10px;font-size:0.68rem;color:var(--blue);line-height:1.6">
-          ✅ <strong>Free tier</strong> — Supabase free plan supports up to 50,000 database rows and 500MB storage. More than enough for a busy venue.
-        </div>
-      </div>
-
-      <!-- Self-Order URL tab -->
-      <div id="dep-qr" style="display:none">
-        <div style="display:flex;flex-direction:column;gap:10px">
-          ${[
-            ['1','Upload self-order.html to GitHub','In your repo, if you haven\'t already, upload <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">self-order.html</code> alongside index.html.'],
-            ['2','Edit self-order.html Supabase keys','Open <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">self-order.html</code> in GitHub (pencil icon) → Find the <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">ONE-TIME SETUP</code> comment near the top of the script → Fill in your Supabase URL, anon key, and Sync Code → Commit.'],
-            ['3','Your self-order URL','Your kiosk URL will be: <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:0.85em">https://yourusername.github.io/cbsystem-pro/self-order.html</code>'],
-            ['4','Paste URL into CBSystem','Go to <strong style="color:var(--text)">Settings → QR Table Ordering</strong> → paste the URL above into the <strong style="color:var(--text)">Self Order page URL</strong> field → Save. The QR generator will use it automatically.'],
-          ].map(([n,title,desc])=>`
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <div style="min-width:24px;height:24px;border-radius:50%;background:var(--gold);color:#07070d;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;flex-shrink:0;margin-top:1px">${n}</div>
-            <div>
-              <div style="font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:2px">${title}</div>
-              <div style="font-size:0.69rem;color:var(--text2);line-height:1.55">${desc}</div>
-            </div>
-          </div>`).join('')}
-        </div>
-        <div style="margin-top:12px;padding:10px 13px;background:rgba(255,215,0,0.07);border:1px solid rgba(255,215,0,0.2);border-radius:10px;font-size:0.68rem;color:var(--gold);line-height:1.6">
-          💡 Customers scan a QR code at their table → opens self-order.html on their phone → orders appear instantly in your Kitchen & Bar views.
-        </div>
-      </div>
-    </div>
-
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-o" onclick="expJSON()">📦 Full Backup</button>
       <button class="btn btn-r" style="margin-left:auto" onclick="if(confirm('Factory reset? All data gone.'))factoryReset()">🔄 Factory Reset</button>
@@ -2640,199 +1805,14 @@ function renderSet(){
   renderStaffMgr();renderMenuMgr();
 }
 
-function toggleHHDay(i){
-  const cb=document.getElementById('hh-d'+i);
-  const sp=document.getElementById('hh-ds'+i);
-  if(!cb||!sp)return;
-  cb.checked=!cb.checked;
-  sp.style.background=cb.checked?'rgba(255,215,0,0.15)':'var(--card)';
-  sp.style.color=cb.checked?'var(--gold)':'var(--text2)';
-}
-function addSection(){
-  const cfg=DB.get('cfg');
-  if(!cfg.sections)cfg.sections=[{id:'restaurant',label:'Restaurant',emoji:'🍽',count:20},{id:'bar',label:'Bar',emoji:'🍺',count:8}];
-  cfg.sections.push({id:'sec'+Date.now(),label:'New Section',emoji:'🌿',count:10});
-  DB.set('cfg',cfg);renderSet();
-}
-function delSection(i){
-  const cfg=DB.get('cfg');
-  if(i<2){toast('Cannot remove Restaurant or Bar','⚠️','t-o');return;}
-  cfg.sections.splice(i,1);DB.set('cfg',cfg);renderSet();
-}
-function saveSections(){
-  const cfg=DB.get('cfg');
-  const secs=cfg.sections||[];
-  secs.forEach((s,i)=>{
-    const em=document.getElementById('sec-em-'+i);const lb=document.getElementById('sec-lb-'+i);const ct=document.getElementById('sec-ct-'+i);
-    if(em)s.emoji=em.value||s.emoji;
-    if(lb)s.label=lb.value.trim()||s.label;
-    if(ct)s.count=parseInt(ct.value)||20;
-    if(i===0){cfg.tableCount=s.count;}
-    if(i===1){cfg.barSeats=s.count;}
-  });
-  DB.set('cfg',cfg);
-  // Rebuild section tabs on POS
-  const tabs=document.getElementById('sec-tabs');
-  if(tabs)tabs.innerHTML=secs.map((s,i)=>`<button class="stab${i===0?' on':''}" onclick="setSec('${s.id}',this)">${s.emoji} ${s.label}</button>`).join('');
-  renderTG();toast('Sections saved — '+secs.length+' areas','🗺','t-g');
-}
-function genVoucher(){
-  const amt=parseFloat(document.getElementById('v-amount')?.value)||0;
-  if(amt<1){toast('Enter a value of at least £1','⚠️','t-o');return;}
-  const customCode=(document.getElementById('v-code')?.value||'').trim().toUpperCase();
-  const code=customCode||'VC'+Math.random().toString(36).slice(2,6).toUpperCase()+Math.floor(amt);
-  const vouchers=DB.get('vouchers')||[];
-  if(vouchers.find(v=>v.code===code)){toast('Code already exists — try a different one','⚠️','t-o');return;}
-  vouchers.push({code,balance:amt,original:amt,used:false,created:Date.now()});
-  DB.set('vouchers',vouchers);
-  document.getElementById('v-amount').value='';
-  document.getElementById('v-code').value='';
-  renderSet();
-  toast('Voucher '+code+' — £'+amt.toFixed(2),'🎁','t-g');
-}
-function delVoucher(code){
-  if(!confirm('Delete voucher '+code+'?'))return;
-  const vouchers=(DB.get('vouchers')||[]).filter(v=>v.code!==code);
-  DB.set('vouchers',vouchers);renderSet();
-  toast('Voucher deleted','🗑','t-o');
-}
-function saveTableTimer(){
-  const cfg=DB.get('cfg');
-  cfg.tableWarnMins=parseInt(document.getElementById('tw-warn')?.value)||90;
-  cfg.tableOverMins=parseInt(document.getElementById('tw-over')?.value)||120;
-  DB.set('cfg',cfg);renderTG();
-  toast('Table timer saved — warn at '+cfg.tableWarnMins+'m, alert at '+cfg.tableOverMins+'m','⏱','t-g');
-}
-function clockIn(staffId){
-  const shifts=DB.get('shifts');
-  const already=shifts.find(s=>s.staffId===staffId&&!s.clockOut&&new Date(s.clockIn).toDateString()===new Date().toDateString());
-  if(already){toast('Already clocked in','⚠️','t-o');return;}
-  shifts.push({id:nid(),staffId,clockIn:Date.now(),clockOut:null});
-  DB.set('shifts',shifts);renderSet();
-  const staff=DB.get('staff').find(s=>s.id===staffId);
-  toast((staff?.name||'Staff')+' clocked in','🕐','t-g');
-}
-function clockOut(staffId){
-  const shifts=DB.get('shifts');
-  const active=shifts.find(s=>s.staffId===staffId&&!s.clockOut);
-  if(!active){toast('Not clocked in','⚠️','t-o');return;}
-  active.clockOut=Date.now();
-  const mins=Math.floor((active.clockOut-active.clockIn)/60000);
-  DB.set('shifts',shifts);renderSet();
-  const staff=DB.get('staff').find(s=>s.id===staffId);
-  toast((staff?.name||'Staff')+' clocked out — '+Math.floor(mins/60)+'h '+mins%60+'m','🕐','t-b');
-}
-function showShiftReport(){
-  const shifts=DB.get('shifts')||[];
-  const staff=DB.get('staff')||[];
-  const week=shifts.filter(s=>(Date.now()-s.clockIn)/864e5<7);
-  const byStaff={};
-  week.forEach(s=>{
-    if(!byStaff[s.staffId])byStaff[s.staffId]={shifts:[],totalMins:0};
-    byStaff[s.staffId].shifts.push(s);
-    if(s.clockOut)byStaff[s.staffId].totalMins+=Math.floor((s.clockOut-s.clockIn)/60000);
-  });
-  showModal(`<div class="modal-t">🕐 Shift Report — Last 7 Days</div>
-    <div style="max-height:380px;overflow-y:auto">
-      ${Object.entries(byStaff).map(([sid,d])=>{
-        const s=staff.find(x=>x.id===sid)||{name:'Unknown'};
-        const hrs=Math.floor(d.totalMins/60);const mins=d.totalMins%60;
-        return`<div style="margin-bottom:12px">
-          <div style="font-weight:700;font-size:0.82rem;margin-bottom:5px">${esc(s.name)} — <span style="color:var(--green)">${hrs}h ${mins}m total</span></div>
-          ${d.shifts.map(sh=>`<div class="shift-row ${!sh.clockOut?'shift-active':''}">
-            <div class="shift-time">${new Date(sh.clockIn).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</div>
-            <div class="shift-time">${new Date(sh.clockIn).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} → ${sh.clockOut?new Date(sh.clockOut).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'Still in'}</div>
-            <div class="shift-dur">${sh.clockOut?Math.floor((sh.clockOut-sh.clockIn)/3600000)+'h '+Math.floor(((sh.clockOut-sh.clockIn)%3600000)/60000)+'m':'Active'}</div>
-          </div>`).join('')}
-        </div>`;
-      }).join('')||'<div style="color:var(--text2);text-align:center;padding:20px">No shifts this week</div>'}
-    </div>
-    <button class="btn btn-o" style="width:100%;margin-top:10px" onclick="closeModal()">Close</button>`);
-}
-function expShifts(){
-  const shifts=DB.get('shifts')||[];const staff=DB.get('staff')||[];
-  const r=[['Date','Staff','Clock In','Clock Out','Hours','Minutes']];
-  shifts.forEach(s=>{
-    const st=staff.find(x=>x.id===s.staffId)||{name:'Unknown'};
-    const d=new Date(s.clockIn);
-    const mins=s.clockOut?Math.floor((s.clockOut-s.clockIn)/60000):null;
-    r.push([d.toLocaleDateString('en-GB'),st.name,d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),s.clockOut?new Date(s.clockOut).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'Active',mins?Math.floor(mins/60):'',mins?mins%60:'']);
-  });
-  dl(r.map(row=>row.map(c=>`"${c}"`).join(',')).join('\n'),'text/csv','shifts_'+new Date().toISOString().slice(0,10)+'.csv');
-  toast('Shift hours exported','📤','t-g');
-}
-function saveHH(){
-  const cfg=DB.get('cfg');
-  const start=(document.getElementById('hh-start')?.value||'16:00').split(':');
-  const end=(document.getElementById('hh-end')?.value||'18:00').split(':');
-  const days=[0,1,2,3,4,5,6].filter(i=>document.getElementById('hh-d'+i)?.checked);
-  cfg.happyHour={
-    enabled:document.getElementById('hh-on')?.checked||false,
-    startH:parseInt(start[0])||16,startM:parseInt(start[1])||0,
-    endH:parseInt(end[0])||18,endM:parseInt(end[1])||0,
-    disc:parseInt(document.getElementById('hh-disc')?.value)||50,
-    days
-  };
-  DB.set('cfg',cfg);renderMG();
-  toast(cfg.happyHour.enabled?`Happy Hour ${start[0]}:${start[1]}–${end[0]}:${end[1]} (${cfg.happyHour.disc}% off) saved`:'Happy Hour disabled','🎉','t-g');
-}
-function depTab(t){
-  ['gh','sb','qr'].forEach(function(id){
-    var panel=document.getElementById('dep-'+id);
-    var btn=document.getElementById('dep-tab-'+id);
-    if(panel)panel.style.display=id===t?'block':'none';
-    if(btn){
-      if(id===t){btn.style.background='var(--accent)';btn.style.color='#fff';btn.classList.remove('btn-o');}
-      else{btn.style.background='';btn.style.color='';btn.classList.add('btn-o');}
-    }
-  });
-}
-function uploadVenueLogo(input){
-  const file=input.files[0];if(!file)return;
-  if(file.size>500000){toast('Logo too large — max 500KB','⚠️','t-o');return;}
-  const r=new FileReader();
-  r.onload=e=>{
-    const cfg=DB.get('cfg');
-    cfg.venueLogo=e.target.result;
-    DB.set('cfg',cfg);
-    updateTopbarLogo(cfg);
-    renderSet();
-    toast('Logo saved','🖼️','t-g');
-  };
-  r.readAsDataURL(file);
-}
-function removeVenueLogo(){
-  const cfg=DB.get('cfg');
-  delete cfg.venueLogo;
-  DB.set('cfg',cfg);
-  updateTopbarLogo(cfg);
-  renderSet();
-  toast('Logo removed','🗑️','t-b');
-}
-function updateTopbarLogo(cfg){
-  const img=document.getElementById('t-logo-img');
-  const name=document.getElementById('t-logo-name');
-  const sb=document.getElementById('sb-venue-name');
-  if(cfg.venueLogo){
-    if(img){img.src=cfg.venueLogo;img.style.display='block';}
-    if(name)name.textContent='';
-  } else {
-    if(img)img.style.display='none';
-    if(name)name.textContent=cfg.venueName||'';
-  }
-  if(sb)sb.textContent=cfg.venueName||'';
-}
 function saveVenue(){
   const cfg=DB.get('cfg');
-  [['venueName','s-venueName'],['venueAddr','s-venueAddr'],['venueTel','s-venueTel'],['receiptFooter','s-receiptFooter'],['vatNum','s-vatNum']].forEach(([k,id])=>{const el=document.getElementById(id);if(el)cfg[k]=el.value;});
+  [['venueName','s-venueName'],['venueAddr','s-venueAddr'],['venueTel','s-venueTel'],['receiptFooter','s-receiptFooter']].forEach(([k,id])=>{const el=document.getElementById(id);if(el)cfg[k]=el.value;});
   cfg.tableCount=parseInt(document.getElementById('s-tc')?.value)||20;
   cfg.barSeats=parseInt(document.getElementById('s-bc')?.value)||8;
   cfg.vatRate=parseFloat(document.getElementById('s-vat')?.value)||20;
   cfg.serviceCharge=document.getElementById('s-svc')?.checked||false;
-  cfg.challenge25=document.getElementById('s-ch25')?.checked!==false;
-  DB.set('cfg',cfg);
-  updateTopbarLogo(cfg);
-  toast('Venue saved','💾','t-g');
+  DB.set('cfg',cfg);toast('Venue saved','💾','t-g');
 }
 
 function saveCloud(){
@@ -2845,9 +1825,46 @@ function saveCloud(){
   if(cfg.cloudMode&&(!cfg.supabaseUrl||!cfg.supabaseKey||!cfg.venueCode)){
     toast('Enter Supabase URL, Anon Key & a Sync Code first','⚠️','t-o');return;
   }
-  DB.set('cfg',cfg);DB.startSync();
-  initStationScreen();
-  toast('Saved — '+(cfg.cloudMode?'Cloud mode active, connecting…':'Local mode active'),'☁️','t-b');
+  DB.set('cfg',cfg);
+  toast('Saved — '+(cfg.cloudMode?'Connecting to Supabase…':'Local mode active'),'☁️','t-b');
+  if(cfg.cloudMode){
+    let attempts=0;
+    const tryConnect=()=>{
+      attempts++;
+      if(typeof window.supabase!=='undefined'){
+        DB._sb=null;
+        DB.startSync();
+        setTimeout(()=>{
+          const dot=document.querySelector('.sb-dot');
+          const syncel=document.getElementById('sb-sync');
+          // Test connection directly
+          const sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseKey);
+          sb.from('cbs_state').select('id').limit(1).then(({error})=>{
+            if(error){
+              setSyncDot('err');
+              if(syncel)syncel.textContent='Error: '+error.message;
+              toast('Connection failed: '+error.message,'❌','t-r');
+              console.error('Supabase error:',error);
+            } else {
+              setSyncDot('ok');
+              if(syncel)syncel.textContent='Connected ✓';
+              toast('Connected to Supabase ✓','☁️','t-g');
+            }
+          });
+        },1500);
+      } else if(attempts<10){
+        setTimeout(tryConnect,500);
+        if(attempts===1)toast('Loading Supabase library…','⏳','t-b');
+      } else {
+        setSyncDot('err');
+        toast('Supabase library failed — check internet connection','❌','t-r');
+      }
+    };
+    tryConnect();
+  } else {
+    setSyncDot('off');
+  }
+  initStationScreen();renderSet();
 }
 
 function showCloudSetup(){
@@ -2943,77 +1960,16 @@ function delS(i){if(!confirm('Remove?'))return;const s=DB.get('staff');s.splice(
 function renderMenuMgr(){
   const el=document.getElementById('menu-mgr');if(!el)return;
   const cats=[...new Set(DB.get('menu').map(m=>m.category))];
-  const ALLG=['Celery','Cereals/Gluten','Crustaceans','Eggs','Fish','Lupin','Milk','Molluscs','Mustard','Nuts','Peanuts','Sesame','Soya','Sulphites'];
   el.innerHTML=DB.get('menu').map((m,i)=>`<div class="mi-row">
     <input class="mi-i" value="${m.emoji}" maxlength="2" onchange="upM(${i},'emoji',this.value)" style="text-align:center;font-size:0.95rem">
     <div class="mi-photo" onclick="pickMImg(${i})" title="Upload a photo">${m.img?`<img src="${m.img}" class="mi-photo-img"><span class="mi-photo-rm" onclick="event.stopPropagation();rmMImg(${i})" title="Remove photo">✕</span>`:'<span class="mi-photo-ic">📷</span>'}</div>
-    <div>
-      <input class="mi-i" value="${esc(m.name)}" onchange="upM(${i},'name',this.value)" style="width:100%">
-      <button onclick="editAllergens(${i})" style="margin-top:3px;font-size:0.58rem;padding:2px 6px;border-radius:5px;border:1px solid var(--border);background:${(m.allergens&&m.allergens.length)?'rgba(255,107,53,0.12)':'var(--card)'};color:${(m.allergens&&m.allergens.length)?'var(--accent)':'var(--text2)'};cursor:pointer">
-        ${(m.allergens&&m.allergens.length)?'⚠️ '+m.allergens.length+' allergen(s)':'+ Allergens'}
-      </button>
-      <button onclick="editUpsells(${i})" style="margin-top:3px;margin-left:3px;font-size:0.58rem;padding:2px 6px;border-radius:5px;border:1px solid var(--border);background:${(m.upsells&&m.upsells.length)?'rgba(45,212,160,0.12)':'var(--card)'};color:${(m.upsells&&m.upsells.length)?'var(--green)':'var(--text2)'};cursor:pointer">
-        ${(m.upsells&&m.upsells.length)?'🔗 '+m.upsells.length+' upsell(s)':'+ Upsells'}
-      </button>
-    </div>
+    <input class="mi-i" value="${esc(m.name)}" onchange="upM(${i},'name',this.value)">
     <input class="mi-i" value="${m.category}" list="catdl" onchange="upM(${i},'category',this.value)">
     <select class="mi-s" onchange="upM(${i},'dest',this.value)"><option${m.dest==='kitchen'?' selected':''}>kitchen</option><option${m.dest==='bar'?' selected':''}>bar</option></select>
     <input class="mi-i" type="number" step="0.5" value="${m.price.toFixed(2)}" onchange="upM(${i},'price',parseFloat(this.value)||0)" style="color:var(--accent);font-family:'JetBrains Mono'">
     <label class="tog" style="transform:scale(0.72)"><input type="checkbox"${m.available!==false?' checked':''} onchange="upM(${i},'available',this.checked)"><div class="tog-sl"></div></label>
-    <label class="tog" style="transform:scale(0.72)" title="Alcoholic — triggers Challenge 25"><input type="checkbox"${m.alcohol?' checked':''} onchange="upM(${i},'alcohol',this.checked)"><div class="tog-sl" style="background:${m.alcohol?'var(--red)':''}"></div></label>
-    <input class="mi-i" type="number" placeholder="kcal" title="Calories" value="${m.calories||''}" onchange="upM(${i},'calories',parseInt(this.value)||0)" style="font-size:0.68rem;color:var(--text2)">
     <div class="mi-del" onclick="delM(${i})">✕</div>
   </div>`).join('')+`<datalist id="catdl">${cats.map(c=>`<option value="${c}">`).join('')}</datalist>`;
-}
-
-const _ALLG14=['Celery','Cereals/Gluten','Crustaceans','Eggs','Fish','Lupin','Milk','Molluscs','Mustard','Nuts','Peanuts','Sesame','Soya','Sulphites'];
-
-function editAllergens(idx){
-  const m=DB.get('menu')[idx];
-  const cur=m.allergens||[];
-  showModal(`<div class="modal-t">⚠️ Allergens — ${esc(m.name)}</div>
-    <div style="font-size:0.69rem;color:var(--text2);margin-bottom:10px">Tick all allergens present in this item (Natasha's Law / EU FIC). They will appear on menu cards, kitchen tickets, and receipts.</div>
-    <div class="allg-grid" id="allg-grid">
-      ${_ALLG14.map(a=>`<div class="allg-cb${cur.includes(a)?' on':''}" onclick="this.classList.toggle('on')" data-a="${a}">
-        ${a}
-      </div>`).join('')}
-    </div>
-    <div style="display:flex;gap:7px;margin-top:12px">
-      <button class="btn btn-o" style="flex:1" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-a" style="flex:2" onclick="saveAllergens(${idx})">✓ Save Allergens</button>
-    </div>`);
-}
-
-function saveAllergens(idx){
-  const selected=[...document.querySelectorAll('#allg-grid .allg-cb.on')].map(el=>el.dataset.a);
-  const m=DB.get('menu');m[idx].allergens=selected;DB.set('menu',m);
-  closeModal();renderMenuMgr();renderMG();
-  toast(selected.length?selected.length+' allergens saved':'Allergens cleared','⚠️','t-o');
-}
-
-function editUpsells(idx){
-  const m=DB.get('menu');const item=m[idx];
-  const cur=item.upsells||[];
-  const others=m.filter((_,i)=>i!==idx);
-  showModal(`<div class="modal-t">🔗 Upsells — ${esc(item.name)}</div>
-    <div style="font-size:0.69rem;color:var(--text2);margin-bottom:10px">Tick items to suggest when this item is added. They appear as a prompt to staff to offer more.</div>
-    <div style="display:flex;flex-direction:column;gap:5px;max-height:340px;overflow-y:auto" id="upsell-grid">
-      ${others.map(o=>`<div class="allg-cb${cur.includes(o.id)?' on':''}" onclick="this.classList.toggle('on')" data-uid="${o.id}" style="justify-content:space-between">
-        <span>${o.emoji} ${esc(o.name)}</span>
-        <span style="color:var(--accent);font-size:0.72rem">${fmt(o.price)}</span>
-      </div>`).join('')}
-    </div>
-    <div style="display:flex;gap:7px;margin-top:12px">
-      <button class="btn btn-o" style="flex:1" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-a" style="flex:2" onclick="saveUpsells(${idx})">✓ Save Upsells</button>
-    </div>`);
-}
-
-function saveUpsells(idx){
-  const selected=[...document.querySelectorAll('#upsell-grid .allg-cb.on')].map(el=>el.dataset.uid);
-  const m=DB.get('menu');m[idx].upsells=selected;DB.set('menu',m);
-  closeModal();renderMenuMgr();
-  toast(selected.length?selected.length+' upsells saved':'Upsells cleared','🔗','t-g');
 }
 
 function pickMImg(i){
@@ -3059,18 +2015,7 @@ function addMItem(){const m=DB.get('menu');m.push({id:'c'+Date.now(),name:'New I
 function delM(i){if(!confirm('Delete?'))return;const m=DB.get('menu');m.splice(i,1);DB.set('menu',m);renderMenuMgr();}
 function expMenu(){dl(JSON.stringify(DB.get('menu'),null,2),'application/json','menu.json');toast('Menu exported','📤','t-g');}
 function impMenu(){const inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=e=>{const r=new FileReader();r.onload=ev=>{try{const m=JSON.parse(ev.target.result);if(Array.isArray(m)){DB.set('menu',m);renderMenuMgr();toast('Menu imported','📥','t-g');}else toast('Invalid JSON','⚠️','t-o');}catch(err){toast('Parse error','⚠️','t-o');}};r.readAsText(e.target.files[0]);};inp.click();}
-function expCSV(){
-  const cfg=DB.get('cfg');const vatR=(cfg.vatRate||20)/100;
-  const r=[['Date','Time','Receipt#','Table','Staff','Covers','Method','Net (excl VAT)','VAT Amount','VAT Rate %','Gross Total','Discount','Service Charge','VAT Reg']];
-  DB.get('txns').forEach(tx=>{
-    const d=new Date(tx.time);
-    const gross=tx.amount;const net=+(gross/(1+vatR)).toFixed(2);const vat=+(gross-net).toFixed(2);
-    const t=calcTotal(tx.items||[],tx.discPct||0);
-    r.push([d.toLocaleDateString('en-GB'),d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),tx.id||'',tx.table||'',tx.staff||'',tx.covers||1,tx.method||'',net,vat,cfg.vatRate||20,gross.toFixed(2),(t.disc||0).toFixed(2),(t.svc||0).toFixed(2),cfg.vatNum||'']);
-  });
-  dl(r.map(row=>row.map(c=>`"${c}"`).join(',')).join('\n'),'text/csv','cbsystem_MTD_'+new Date().toISOString().slice(0,10)+'.csv');
-  toast('MTD CSV exported','📤','t-g');
-}
+function expCSV(){const r=[['Time','Table','Amount','Method','Staff','Covers']];DB.get('txns').forEach(tx=>r.push([new Date(tx.time).toLocaleString('en-GB'),tx.table,tx.amount.toFixed(2),tx.method,tx.staff,tx.covers||1]));dl(r.map(row=>row.map(c=>`"${c}"`).join(',')).join('\n'),'text/csv','cbsystem_'+new Date().toISOString().slice(0,10)+'.csv');toast('CSV exported','📤','t-g');}
 function expJSON(){dl(JSON.stringify(DB.d,null,2),'application/json','cbs_bk_'+new Date().toISOString().slice(0,10)+'.json');toast('Backup exported','📦','t-g');}
 function factoryReset(){localStorage.removeItem('cbs2');location.reload();}
 
@@ -3172,8 +2117,8 @@ body{display:flex;flex-direction:column;}
 
 <!-- TOP BAR -->
 <div class="cd-top">
-  ${cfg.venueLogo?`<img src="${cfg.venueLogo}" alt="" style="height:36px;width:auto;max-width:110px;object-fit:contain;border-radius:4px;">`:`<div class="cd-logo">${venueName.substring(0,12)}</div>`}
-  <div class="cd-venue" id="cd-venue" style="${cfg.venueLogo?'':'display:none'}">${venueName}</div>
+  <div class="cd-logo">CBS</div>
+  <div class="cd-venue" id="cd-venue">${venueName}</div>
   <div class="cd-clock" id="cd-clock">--:--:--</div>
   <div class="cd-live"><div class="live-dot"></div>Live</div>
 </div>
@@ -3202,15 +2147,15 @@ body{display:flex;flex-direction:column;}
     <div class="cd-spacer"></div>
     <div class="cd-grand-lbl">Total to Pay</div>
     <div class="cd-grand-val" id="cd-grand">£0.00</div>
-    <div class="cd-footer">${footer}</div>
+    <div class="cd-footer">${footer}<div class="cd-brand">CBSYSTEM PRO</div></div>
   </div>
 </div>
 
 <!-- WELCOME SCREEN (shown when no active table) -->
 <div class="cd-welcome" id="cd-welcome">
-  ${cfg.venueLogo?`<img src="${cfg.venueLogo}" alt="" style="height:90px;width:auto;max-width:260px;object-fit:contain;border-radius:8px;margin-bottom:8px;">`:`<div class="wl-logo">${venueName.substring(0,14)}</div>`}
+  <div class="wl-logo">CBS</div>
   <div class="wl-name">${venueName}</div>
-  <div class="wl-sub">Welcome</div>
+  <div class="wl-sub">Customer Display · Powered by CBSystem PRO</div>
   <div class="wl-scroll">Welcome — please ask your server to take your order</div>
 </div>
 
@@ -3818,7 +2763,7 @@ function printKioskReceipt(cfg,items,totals,tk,method){
   const rows=items.map(i=>\`<div style="display:flex;justify-content:space-between"><span>\${i.qty} x \${esc(i.name)}</span><span>\${fmt(i.price*i.qty)}</span></div>\`).join('');
   const loc=tk.startsWith('B')?'Bar '+tk.slice(1):tk.startsWith('TA')?'Takeaway #'+tk.split('-')[1]:'Table '+tk.slice(1);
   w.document.write(\`<html><head><style>body{font-family:monospace;font-size:13px;margin:10px}hr{border:1px dashed #000}.center{text-align:center}.big{font-size:18px;font-weight:bold}.row{display:flex;justify-content:space-between}</style></head><body>
-    <div class="center big">\${esc(cfg.venueName||'')}</div>
+    <div class="center big">\${esc(cfg.venueName||'CBSystem')}</div>
     <div class="center">\${esc(cfg.venueAddr||'')}</div>
     <div class="center">\${esc(cfg.venueTel||'')}</div>
     <hr>
@@ -3916,71 +2861,6 @@ document.addEventListener('keydown',e=>{
     if(e.key==='Enter')tryLogin();
   }
 });
-
-// ═══════════════════════════════════════
-// PWA INSTALL — Android/Windows/Chrome + iOS
-// ═══════════════════════════════════════
-let _pwaPrompt=null;
-
-// Android / Windows / Chrome Desktop — browser fires this event
-window.addEventListener('beforeinstallprompt',e=>{
-  e.preventDefault();
-  _pwaPrompt=e;
-  const banner=document.getElementById('pwa-install-banner');
-  if(banner){banner.style.display='flex';}
-});
-
-// After successful install, hide the banner
-window.addEventListener('appinstalled',()=>{
-  const banner=document.getElementById('pwa-install-banner');
-  if(banner)banner.style.display='none';
-  toast('CBSystem PRO installed!','✅','t-g');
-});
-
-function pwaTriggerInstall(){
-  if(_pwaPrompt){
-    _pwaPrompt.prompt();
-    _pwaPrompt.userChoice.then(r=>{
-      if(r.outcome==='accepted'){
-        const banner=document.getElementById('pwa-install-banner');
-        if(banner)banner.style.display='none';
-      }
-      _pwaPrompt=null;
-    });
-  }
-}
-
-// iOS Safari — no beforeinstallprompt; show manual hint instead
-(function(){
-  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent||'');
-  const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent||'');
-  const isStandalone=('standalone' in navigator)&&navigator.standalone;
-  if(isIOS&&isSafari&&!isStandalone){
-    setTimeout(()=>{
-      const hint=document.getElementById('ios-install-hint');
-      if(hint)hint.style.display='block';
-    },3000);
-  }
-})();
-
-// Register service worker for offline support (PWA requirement)
-if('serviceWorker' in navigator){
-  // Inline service worker — no external file needed
-  const swCode=`
-self.addEventListener('install',e=>self.skipWaiting());
-self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
-self.addEventListener('fetch',e=>{
-  if(e.request.method!=='GET')return;
-  e.respondWith(
-    caches.open('cbsystem-v2').then(cache=>
-      fetch(e.request).then(res=>{cache.put(e.request,res.clone());return res;}).catch(()=>caches.match(e.request))
-    )
-  );
-});`;
-  const blob=new Blob([swCode],{type:'application/javascript'});
-  const swUrl=URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl,{scope:'./'}).catch(()=>{});
-}
 </script>
 </body>
 </html>
