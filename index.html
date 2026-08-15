@@ -532,6 +532,30 @@ const DB={
       }else{
         await this._push(); // first device — seed the cloud row with local data
       }
+      // Start 1-second polling as primary sync (fast and reliable)
+      if(this._pollTimer){clearInterval(this._pollTimer);this._pollTimer=null;}
+      this._pollTimer=setInterval(async()=>{
+        try{
+          const{data,error}=await sb.from('cbs_state').select('data,updated_at').eq('id',code).maybeSingle();
+          if(error||!data||!data.data)return;
+          const remoteTime=new Date(data.updated_at).getTime();
+          const localTime=this._lastRemoteTime||0;
+          if(remoteTime>localTime){
+            this._lastRemoteTime=remoteTime;
+            this._applyingRemote=true;
+            const localCfg=this.d.cfg;
+            this.d=data.data;
+            this.d.cfg=Object.assign({},localCfg,data.data.cfg||{},{cloudMode:true,supabaseUrl:localCfg.supabaseUrl,supabaseKey:localCfg.supabaseKey,venueCode:code});
+            try{localStorage.setItem('cbs2',JSON.stringify(this.d));}catch(e){}
+            this._cbs.forEach(fn=>{try{fn();}catch(e){}});
+            this._applyingRemote=false;
+            setSyncDot('ok');
+            const el=document.getElementById('sb-sync');
+            if(el)el.textContent='Synced '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+          }
+        }catch(e){setSyncDot('syncing');}
+      },1000);
+
       this._channel=sb.channel('cbs_room_'+code)
         .on('postgres_changes',{event:'*',schema:'public',table:'cbs_state',filter:'id=eq.'+code},payload=>{
           const remote=payload.new&&payload.new.data;
@@ -543,35 +567,16 @@ const DB={
           try{localStorage.setItem('cbs2',JSON.stringify(this.d));}catch(e){}
           this._cbs.forEach(fn=>{try{fn();}catch(e){}});
           this._applyingRemote=false;
-          const el=document.getElementById('sb-sync');if(el)el.textContent='Synced '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+          this._lastRemoteTime=Date.now();
+          setSyncDot('ok');
+          const el=document.getElementById('sb-sync');
+          if(el)el.textContent='Synced '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
         })
         .subscribe(status=>{
-          setSyncDot(status==='SUBSCRIBED'?'ok':status==='CHANNEL_ERROR'||status==='TIMED_OUT'?'off':'syncing');
-          // If realtime not available, fall back to polling every 3s
+          setSyncDot(status==='SUBSCRIBED'?'ok':status==='CHANNEL_ERROR'||status==='TIMED_OUT'?'syncing':'syncing');
           if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
-            if(!this._pollTimer){
-              this._pollTimer=setInterval(async()=>{
-                try{
-                  const{data,error}=await sb.from('cbs_state').select('data,updated_at').eq('id',code).maybeSingle();
-                  if(error||!data)return;
-                  const remoteTime=new Date(data.updated_at).getTime();
-                  const localTime=new Date(this.d.cfg?.lastSync||0).getTime();
-                  if(remoteTime>localTime&&data.data){
-                    this._applyingRemote=true;
-                    const localCfg=this.d.cfg;
-                    this.d=data.data;
-                    this.d.cfg=Object.assign({},localCfg,data.data.cfg||{},{cloudMode:true,supabaseUrl:localCfg.supabaseUrl,supabaseKey:localCfg.supabaseKey,venueCode:code});
-                    try{localStorage.setItem('cbs2',JSON.stringify(this.d));}catch(e){}
-                    this._cbs.forEach(fn=>{try{fn();}catch(e){}});
-                    this._applyingRemote=false;
-                    setSyncDot('ok');
-                    const el=document.getElementById('sb-sync');if(el)el.textContent='Synced '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-                  }
-                }catch(e){}
-              },3000);
-            }
+            if(this._pollTimer){clearInterval(this._pollTimer);this._pollTimer=null;}
           } else if(status==='SUBSCRIBED'){
-            // Realtime working — clear poll timer
             if(this._pollTimer){clearInterval(this._pollTimer);this._pollTimer=null;}
           }
         });
@@ -579,7 +584,7 @@ const DB={
   },
   _queuePush(){
     clearTimeout(this._pushTimer);
-    this._pushTimer=setTimeout(()=>this._push(),450); // debounce rapid saves into one push
+    this._pushTimer=setTimeout(()=>this._push(),200); // debounce rapid saves into one push
   },
   async _push(){
     const c=this.d.cfg;
@@ -877,14 +882,26 @@ function selT(t){
   if(!o[t])o[t]={items:[],covers:1,note:'',openedAt:Date.now(),openedBy:S.user?.name,orderType:'dineIn'};
   if(!o[t].orderType)o[t].orderType='dineIn';
   DB.set('tOrders',o);
+  // Store selected table so customer display can follow it
+  try{localStorage.setItem('cbs_selected_table',t);}catch(e){}
+  // Instantly notify customer display on same device
+  try{if(window._cdChannel)window._cdChannel.postMessage({type:'table_selected',table:t});}catch(e){}
   renderTG();renderOP();
   const lbl=t.startsWith('B')?'Bar '+t.slice(1):'Table '+t.slice(1);
   const otb=document.getElementById('otb');if(otb)otb.textContent=lbl;
   const cl=document.getElementById('cov-l');if(cl)cl.textContent=(o[t].covers||1)+' cover(s)'+(o[t].note?' · 📝 '+o[t].note:'');
   _updOTBtns(o[t].orderType||'dineIn');
   _updQRBtn(!!o[t].qrOrder);
-  S.tablesMini=true;applyTablesMini(); // shrink the table list once a table's picked, so the menu has more room
+  S.tablesMini=true;applyTablesMini();
 }
+
+// BroadcastChannel so till → customer display updates instantly (same device, different tab)
+try{
+  window._cdChannel=new BroadcastChannel('cbs_cd');
+  window._cdChannel.onmessage=function(e){
+    if(e.data?.type==='render')DB._cbs.forEach(fn=>{try{fn();}catch(ex){}});
+  };
+}catch(e){window._cdChannel=null;}
 
 function toggleTablesPanel(){
   S.tablesMini=!S.tablesMini;
@@ -984,6 +1001,8 @@ function remOI(idx){
 }
 
 function renderOP(){
+  // Broadcast to customer display tab instantly
+  try{if(window._cdChannel)window._cdChannel.postMessage({type:'render'});}catch(e){}
   const c=document.getElementById('oi');if(!c)return;
   const o=DB.get('tOrders');
   if(!S.selTable||!o[S.selTable]){c.innerHTML=`<div style="text-align:center;color:var(--text2);font-size:0.74rem;padding:28px 12px">Select a table then add items</div>`;setTots();return;}
@@ -2124,6 +2143,17 @@ body{display:flex;flex-direction:column;}
 
 /* RIGHT — totals */
 .cd-totals{width:280px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;padding:28px 22px;}
+@media(max-width:700px){
+  .cd-order{flex-direction:column!important;padding:12px!important;}
+  .cd-totals{width:100%!important;border-left:none!important;border-top:1px solid var(--border);padding:14px 12px!important;}
+  .cd-top{padding:0 14px!important;height:52px!important;}
+  .cd-iname{font-size:0.85rem!important;}
+  .cd-ipr{font-size:0.85rem!important;}
+  .cd-item{padding:8px 0!important;}
+  .cd-grand-val{font-size:2.2rem!important;}
+  .cd-welcome{padding:20px!important;}
+  .wl-logo{font-size:2rem!important;}
+}
 .cd-tot-title{font-family:'Bebas Neue';font-size:1.2rem;color:var(--text2);letter-spacing:2px;margin-bottom:22px;}
 .cd-tot-row{display:flex;justify-content:space-between;font-size:0.8rem;color:var(--text2);margin-bottom:8px;}
 .cd-tot-row.grand{color:var(--text);font-weight:700;font-size:1.1rem;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
@@ -2213,15 +2243,20 @@ function render(){
   let data;
   try{const s=localStorage.getItem('cbs2');if(!s)return;data=JSON.parse(s);}catch(e){return;}
 
-  // Find the most recently active / occupied table
-  const orders=data.tOrders||{};
-  // Prefer the table the POS has selected (stored temporarily)
+  // Track selected table from till
   let activeTable=null;
-  // Pick whichever table has items (most recent openedAt)
-  let bestTime=0;
-  Object.entries(orders).forEach(([t,o])=>{
-    if(o&&o.items&&o.items.length&&(o.openedAt||0)>bestTime){bestTime=o.openedAt||0;activeTable=t;}
-  });
+  // 1. Check what the till has selected (stored in localStorage)
+  const selectedTable=localStorage.getItem('cbs_selected_table');
+  const orders=data.tOrders||{};
+  if(selectedTable&&orders[selectedTable]){
+    activeTable=selectedTable;
+  } else {
+    // Fallback — pick most recently opened table with items
+    let bestTime=0;
+    Object.entries(orders).forEach(([t,o])=>{
+      if(o&&o.items&&o.items.length&&(o.openedAt||0)>bestTime){bestTime=o.openedAt||0;activeTable=t;}
+    });
+  }
 
   const welcome=document.getElementById('cd-welcome');
   if(!activeTable||!orders[activeTable]?.items?.length){
@@ -2268,12 +2303,18 @@ setInterval(()=>{
   if(el)el.textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 },1000);
 
-// Poll localStorage every 1.5s for updates
+// Poll localStorage every 500ms for updates (fast)
 render();
-setInterval(render,1500);
+setInterval(render,500);
 
-// Also listen for storage events (cross-tab)
-window.addEventListener('storage',e=>{if(e.key==='cbs2')render();});
+// BroadcastChannel — instant update when till changes (same device)
+try{
+  const bc=new BroadcastChannel('cbs_cd');
+  bc.onmessage=function(e){render();};
+}catch(e){}
+
+// Also listen for storage events (cross-tab fallback)
+window.addEventListener('storage',e=>{if(e.key==='cbs2'||e.key==='cbs_selected_table')render();});
 <\/script>
 </body>
 </html>`;
