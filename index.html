@@ -333,9 +333,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 
 <!-- STATION SELECT — boots here directly -->
 <div id="station-screen">
-  <div class="ss-logo">CBSystem</div>
-  <div class="ss-sub">Professional Restaurant & Bar Platform</div>
-  <div class="ss-venue" id="ss-venue">Loading...</div>
+  <div id="ss-venue-logo" style="margin-bottom:6px;display:none"><img id="ss-logo-img" src="" alt="" style="max-height:90px;max-width:260px;object-fit:contain;border-radius:8px"></div>
+  <div class="ss-logo" id="ss-venue" style="font-size:4rem;color:var(--text);letter-spacing:4px;">Loading...</div>
+  <div class="ss-sub" id="ss-tagline">Powering Every Order, Every Pour.</div>
   <div class="stations-grid">
     <div class="st-card sc-till"   onclick="goLogin('till')">   <div class="st-icon">🖥️</div><div class="st-name">Till</div>   <div class="st-desc">POS · Payments · Orders</div></div>
     <div class="st-card sc-waiter" onclick="goLogin('waiter')"> <div class="st-icon">🧑‍🍽️</div><div class="st-name">Waiter</div> <div class="st-desc">Tables · Orders · Send</div></div>
@@ -351,6 +351,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 <!-- LOGIN -->
 <div id="login-screen">
   <button class="ls-back" onclick="backToStations()">← Stations</button>
+  <div id="ls-venue-logo" style="display:none;margin-bottom:10px"><img id="ls-logo-img" src="" alt="" style="max-height:70px;max-width:200px;object-fit:contain;border-radius:6px"></div>
+  <div class="ls-venue-name" id="ls-venue-name" style="font-family:'Bebas Neue';font-size:2.8rem;letter-spacing:4px;color:var(--text);margin-bottom:4px;text-align:center;"></div>
   <div class="ls-badge" id="ls-badge">Till</div>
   <div class="ls-sub">Select staff · enter PIN</div>
   <div class="staff-row" id="staff-row"></div>
@@ -366,6 +368,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
       <button class="pk" style="background:var(--accent);color:#fff" onclick="tryLogin()">✓</button>
     </div>
   </div>
+  <div style="height:16px"></div>
 </div>
 
 <!-- APP -->
@@ -376,6 +379,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div class="t-tabs" id="t-tabs"></div>
     <div class="t-right">
       <div class="t-clock" id="t-clock">--:--:--</div>
+      <button id="drawer-btn" onclick="openCashDrawer()" title="Open Cash Drawer" style="display:none;padding:2px 9px;font-size:0.7rem;border-radius:7px;border:1px solid var(--green);background:rgba(45,212,160,0.1);color:var(--green);cursor:pointer;font-weight:700">💰 Drawer</button>
       <button class="btn btn-o" style="padding:2px 9px;font-size:0.62rem;border-color:#22d3ee;color:#22d3ee" onclick="openCustomerDisplay()" title="Open Customer Display">🪟</button>
       <div class="t-sync" id="t-sync" title="Sync"></div>
       <div class="usr-btn" onclick="doLogout()">
@@ -389,7 +393,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div class="sb-it"><div class="sb-dot" style="background:var(--green)"></div>Online</div>
     <div class="sb-it" id="sb-st"></div>
     <div class="sb-it" id="sb-md"></div>
-    <div class="sb-it" style="margin-left:auto;color:#2a2a40;font-size:0.56rem">CBSystem PRO © 2025</div>
+    <div class="sb-it" id="sb-venue-name" style="margin-left:auto;color:#2a2a40;font-size:0.56rem"></div>
     <div class="sb-it" id="sb-sync"></div>
   </div>
 </div>
@@ -479,6 +483,7 @@ const DB={
     if(!this.d.txns)this.d.txns=[];
     if(!this.d.bkgs)this.d.bkgs=[];
     if(!this.d.voids)this.d.voids=[];
+    if(!this.d.drawerLog)this.d.drawerLog=[];
     if(!this.d.idc)this.d.idc=0;
   },
   save(){
@@ -580,7 +585,13 @@ const DB={
             if(this._pollTimer){clearInterval(this._pollTimer);this._pollTimer=null;}
           }
         });
-    }catch(e){console.error('Cloud sync init failed',e);setSyncDot('off');}
+    }catch(e){
+      console.error('Cloud sync init failed',e);
+      setSyncDot('off');
+      const el=document.getElementById('sb-sync');
+      if(el)el.textContent='Error: '+e.message;
+      toast('Connection failed: '+e.message,'❌','t-r');
+    }
   },
   _queuePush(){
     clearTimeout(this._pushTimer);
@@ -626,10 +637,53 @@ window.addEventListener('load',()=>{
   }
 });
 
+function updateTopbarLogo(cfg){
+  const img=document.getElementById('t-logo-img');
+  const name=document.getElementById('t-logo-name');
+  const sb=document.getElementById('sb-venue-name');
+  if(cfg.venueLogo){
+    if(img){img.src=cfg.venueLogo;img.style.display='block';}
+    if(name)name.textContent='';
+  } else {
+    if(img)img.style.display='none';
+    if(name)name.textContent=cfg.venueName||'';
+  }
+  if(sb)sb.textContent=cfg.venueName||'';
+}
+
 function initStationScreen(){
   const cfg=DB.get('cfg');
-  document.getElementById('ss-venue').textContent=cfg.venueName||'Restaurant';
-  document.getElementById('ss-mode-lbl').textContent=(cfg.cloudMode?'☁️ Cloud Mode':'💾 Local Mode')+' · CBSystem PRO v2.0';
+  const venueName=cfg.venueName||'Your Venue';
+  // Station screen — show logo or venue name big
+  const ssVenue=document.getElementById('ss-venue');
+  const ssLogoWrap=document.getElementById('ss-venue-logo');
+  const ssLogoImg=document.getElementById('ss-logo-img');
+  if(ssVenue)ssVenue.textContent=venueName;
+  if(cfg.venueLogo&&ssLogoWrap&&ssLogoImg){
+    ssLogoImg.src=cfg.venueLogo;
+    ssLogoWrap.style.display='block';
+    if(ssVenue)ssVenue.style.display='none';
+  } else {
+    if(ssLogoWrap)ssLogoWrap.style.display='none';
+    if(ssVenue)ssVenue.style.display='block';
+  }
+  document.getElementById('ss-mode-lbl').textContent=(cfg.cloudMode?'☁️ Cloud Mode':'💾 Local Mode')+' · v2.0';
+  // Login screen — venue name big above station badge
+  const lsName=document.getElementById('ls-venue-name');
+  const lsLogoWrap=document.getElementById('ls-venue-logo');
+  const lsLogoImg=document.getElementById('ls-logo-img');
+  if(cfg.venueLogo&&lsLogoWrap&&lsLogoImg){
+    lsLogoImg.src=cfg.venueLogo;
+    lsLogoWrap.style.display='block';
+    if(lsName)lsName.style.display='none';
+  } else {
+    if(lsLogoWrap)lsLogoWrap.style.display='none';
+    if(lsName){lsName.textContent=venueName;lsName.style.display='block';}
+  }
+  updateTopbarLogo(cfg);
+  // Show drawer button if cash drawer is enabled
+  const drawerBtn=document.getElementById('drawer-btn');
+  if(drawerBtn&&cfg.terminal?.cashDrawer)drawerBtn.style.display='block';
 }
 
 // ═══════════════════════════════════════
@@ -844,6 +898,7 @@ function buildPOSCore(wrap,showPayment){
             <button class="btn btn-o" onclick="doMove()">↔ Move</button>
             <button class="btn btn-o" style="color:var(--red)" onclick="doVoid()">🗑</button>
           </div>
+          ${(DB.get('cfg').terminal?.cashDrawer)?'<button class="btn" style="width:100%;background:rgba(45,212,160,0.1);border-color:var(--green);color:var(--green);font-size:0.72rem" onclick="openCashDrawer()">💰 No Sale — Open Drawer</button>':''}
         </div>
       </div>
     </div>`;
@@ -1156,6 +1211,8 @@ function openPay(){
       const otb=document.getElementById('otb');if(otb)otb.textContent='No Table';
       const cl=document.getElementById('cov-l');if(cl)cl.textContent='Select a table';
       renderOP();renderTG();toast(fmt(parseFloat(amt))+' — '+pm.toUpperCase()+' — Paid ✓','✅','t-g');
+      // Auto-open cash drawer on cash payment
+      if(pm==='cash'&&DB.get('cfg').terminal?.cashDrawer)openCashDrawer();
     },900);
   };
 }
@@ -1459,23 +1516,91 @@ function renderTerminalFields(){
   f.innerHTML=msgs[t]||msgs.manual;
 }
 
+function toggleDrawerType(){
+  const t=document.getElementById('t-drawer-type')?.value;
+  const ipField=document.getElementById('drawer-ip-field');
+  if(ipField)ipField.style.display=t==='network'?'':'none';
+}
+function toggleDrawerSettings(){
+  const on=document.getElementById('t-drawer')?.checked;
+  const ds=document.getElementById('drawer-settings');
+  if(ds)ds.style.display=on?'':'none';
+}
+// Attach toggle listener after render
+document.addEventListener('change',e=>{
+  if(e.target&&e.target.id==='t-drawer')toggleDrawerSettings();
+});
+
+function openCashDrawer(){
+  const cfg=DB.get('cfg');
+  const t=cfg.terminal||{};
+  const dtype=t.drawerType||'printer';
+  if(dtype==='network'&&t.drawerIp){
+    // Send ESC/POS drawer kick via fetch to printer IP
+    const escCmd=new Uint8Array([0x1B,0x70,0x00,0x19,0xFA]); // ESC p 0 25 250
+    fetch('http://'+t.drawerIp+':9100',{method:'POST',body:escCmd,mode:'no-cors'})
+      .catch(()=>{});
+    toast('💰 Drawer opened','✅','t-g');
+    logDrawerOpen();
+  } else if(dtype==='browser'){
+    // Browser print method — creates ESC/POS in a print iframe
+    const iframe=document.createElement('iframe');
+    iframe.style.display='none';
+    document.body.appendChild(iframe);
+    const doc=iframe.contentDocument||iframe.contentWindow.document;
+    doc.open();
+    doc.write('<html><body><script>window.onload=function(){window.print();window.close()}<\/script></body></html>');
+    doc.close();
+    setTimeout(()=>document.body.removeChild(iframe),2000);
+    toast('💰 Drawer command sent','✅','t-g');
+    logDrawerOpen();
+  } else {
+    // Via receipt printer — send ESC/POS kick command with a silent receipt
+    const printerIp=t.rip||cfg.printer?.rip||'';
+    if(printerIp){
+      const escCmd=new Uint8Array([0x1B,0x70,0x00,0x19,0xFA,0x1D,0x56,0x00]);
+      fetch('http://'+printerIp+':9100',{method:'POST',body:escCmd,mode:'no-cors'}).catch(()=>{});
+      toast('💰 Drawer opened via printer','✅','t-g');
+    } else {
+      // No printer IP — open a print window with ESC/POS embedded
+      const w=window.open('','_blank','width=1,height=1');
+      if(w){
+        w.document.write('<html><body style="margin:0"><script>window.onload=function(){window.print();setTimeout(window.close,500)}<\/script></body></html>');
+        w.document.close();
+        toast('💰 Drawer command sent','✅','t-g');
+      } else {
+        toast('Set printer IP in Settings → Payment Terminal for drawer control','⚠️','t-o');
+      }
+    }
+    logDrawerOpen();
+  }
+}
+
+function logDrawerOpen(){
+  const log=DB.get('drawerLog')||[];
+  log.push({staff:S.user?.name,time:Date.now(),type:'open'});
+  DB.set('drawerLog',log);
+}
+
 function saveTerminal(){
   const cfg=DB.get('cfg');
   if(!cfg.terminal)cfg.terminal={};
   cfg.terminal.type=document.getElementById('t-type')?.value||'manual';
-  cfg.terminal.code=document.getElementById('t-code')?.value.trim()||'';
-  cfg.terminal.apiKey=document.getElementById('t-apikey')?.value.trim()||'';
-  cfg.terminal.readerId=document.getElementById('t-reader')?.value.trim()||'';
+  cfg.terminal.sumupCode=document.getElementById('t-sc')?.value.trim()||'';
   cfg.terminal.printReceipt=document.getElementById('t-receipt')?.checked||false;
   cfg.terminal.emailReceipt=document.getElementById('t-email')?.checked||false;
   cfg.terminal.askTip=document.getElementById('t-tip')?.checked||false;
   cfg.terminal.cashDrawer=document.getElementById('t-drawer')?.checked||false;
+  cfg.terminal.drawerType=document.getElementById('t-drawer-type')?.value||'printer';
+  cfg.terminal.drawerIp=document.getElementById('t-drawer-ip')?.value.trim()||'';
   cfg.terminal.tipOptions=document.getElementById('t-tips')?.value||'10,12.5,15';
   DB.set('cfg',cfg);
-  const t=cfg.terminal.type;
-  toast(`Payment terminal saved — ${t==='manual'?'Manual (any terminal)':t}`,'💳','t-g');
+  // Show/hide drawer button on topbar
+  const drawerBtn=document.getElementById('drawer-btn');
+  if(drawerBtn)drawerBtn.style.display=cfg.terminal.cashDrawer?'block':'none';
+  toast('Payment settings saved','💾','t-g');
+  renderOP();
 }
-
 function expCSV(){const r=[['Time','Table','Amount','Method','Staff','Covers']];DB.get('txns').forEach(tx=>r.push([new Date(tx.time).toLocaleString('en-GB'),tx.table,tx.amount.toFixed(2),tx.method,tx.staff,tx.covers||1]));dl(r.map(row=>row.map(c=>`"${c}"`).join(',')).join('\n'),'text/csv','cbsystem_'+new Date().toISOString().slice(0,10)+'.csv');toast('CSV exported','📤','t-g');}
 function expJSON(){dl(JSON.stringify(DB.d,null,2),'application/json','cbsystem_bk_'+new Date().toISOString().slice(0,10)+'.json');toast('Backup exported','📦','t-g');}
 function eod(){DB.set('txns',[]);DB.set('kOrders',[]);DB.set('bOrders',[]);DB.set('tOrders',{});DB.set('voids',[]);toast('End of day complete','🔒','t-o');}
@@ -1665,6 +1790,15 @@ function renderSet(){
       <div class="set-card">
         <div class="set-t">🏪 Venue</div>
         ${[['venueName','Venue Name'],['venueAddr','Address'],['venueTel','Phone'],['receiptFooter','Receipt Footer']].map(([k,l])=>`<div class="sf"><label class="sl">${l}</label><input class="si" id="s-${k}" value="${esc(cfg[k]||'')}"></div>`).join('')}
+        <div class="sf">
+          <label class="sl">Venue Logo <span style="font-size:0.6rem;color:var(--text2)">(shown on station screen, login, receipts & customer display)</span></label>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px">
+            ${cfg.venueLogo?`<img src="${cfg.venueLogo}" style="height:42px;width:auto;max-width:120px;object-fit:contain;border-radius:6px;border:1px solid var(--border)">`:`<div style="height:42px;width:80px;border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:var(--text2)">No logo</div>`}
+            <label style="cursor:pointer"><span class="btn btn-o" style="font-size:0.7rem;padding:4px 12px">📁 Upload Logo</span><input type="file" accept="image/*" style="display:none" onchange="uploadVenueLogo(this)"></label>
+            ${cfg.venueLogo?`<button class="btn" style="font-size:0.7rem;padding:4px 10px;background:var(--red);color:#fff" onclick="removeVenueLogo()">✕ Remove</button>`:''}
+          </div>
+          <div style="font-size:0.58rem;color:var(--text2);margin-top:4px">PNG, JPG, SVG or WebP — max 500KB</div>
+        </div>
         <div style="display:flex;gap:7px">
           <div class="sf" style="flex:1"><label class="sl">Tables</label><input class="si" id="s-tc" type="number" value="${cfg.tableCount||20}"></div>
           <div class="sf" style="flex:1"><label class="sl">Bar Seats</label><input class="si" id="s-bc" type="number" value="${cfg.barSeats||8}"></div>
@@ -1804,7 +1938,25 @@ function renderSet(){
           <div class="s-row"><div><div style="font-size:0.8rem">Print Receipt</div><div style="font-size:0.63rem;color:var(--text2)">Auto-print on payment</div></div><label class="tog"><input type="checkbox" id="t-receipt" ${cfg.terminal?.printReceipt?'checked':''}><div class="tog-sl"></div></label></div>
           <div class="s-row"><div><div style="font-size:0.8rem">Email Receipt</div><div style="font-size:0.63rem;color:var(--text2)">Ask customer for email</div></div><label class="tog"><input type="checkbox" id="t-email" ${cfg.terminal?.emailReceipt?'checked':''}><div class="tog-sl"></div></label></div>
           <div class="s-row"><div><div style="font-size:0.8rem">Ask for Tip</div><div style="font-size:0.63rem;color:var(--text2)">Show tip prompt on checkout</div></div><label class="tog"><input type="checkbox" id="t-tip" ${cfg.terminal?.askTip?'checked':''}><div class="tog-sl"></div></label></div>
-          <div class="s-row"><div><div style="font-size:0.8rem">No Sale / Open Drawer</div><div style="font-size:0.63rem;color:var(--text2)">Cash drawer integration</div></div><label class="tog"><input type="checkbox" id="t-drawer" ${cfg.terminal?.cashDrawer?'checked':''}><div class="tog-sl"></div></label></div>
+          <div class="s-row"><div><div style="font-size:0.8rem">No Sale / Open Drawer</div><div style="font-size:0.63rem;color:var(--text2)">Shows 💰 Drawer button on topbar and order panel</div></div><label class="tog"><input type="checkbox" id="t-drawer" ${cfg.terminal?.cashDrawer?'checked':''}><div class="tog-sl"></div></label></div>
+          <div id="drawer-settings" style="${cfg.terminal?.cashDrawer?'':'display:none'}">
+            <div class="sf" style="margin-top:8px"><label class="sl">Drawer Connection Type</label>
+              <select class="si" id="t-drawer-type" onchange="toggleDrawerType()">
+                <option value="printer" ${(cfg.terminal?.drawerType||'printer')==='printer'?'selected':''}>Via Receipt Printer (most common)</option>
+                <option value="network" ${cfg.terminal?.drawerType==='network'?'selected':''}>Direct Network (IP drawer)</option>
+                <option value="browser" ${cfg.terminal?.drawerType==='browser'?'selected':''}>Browser Print (popup)</option>
+              </select>
+            </div>
+            <div id="drawer-ip-field" class="sf" style="${cfg.terminal?.drawerType==='network'?'':'display:none'}">
+              <label class="sl">Drawer IP Address</label>
+              <input class="si" id="t-drawer-ip" value="${esc(cfg.terminal?.drawerIp||'')}" placeholder="192.168.1.105">
+            </div>
+            <div style="font-size:0.62rem;color:var(--text2);margin-top:4px;line-height:1.6">
+              <b>Via Receipt Printer</b> — drawer must be connected to the receipt printer's RJ-11 port. Uses ESC/POS kick command sent with receipt.<br>
+              <b>Direct Network</b> — drawer has its own IP address on your WiFi network.<br>
+              <b>Browser Print</b> — opens a silent print dialog that triggers the drawer (fallback method).
+            </div>
+          </div>
           <div class="sf" style="margin-top:8px"><label class="sl">Tip Options (comma separated %)</label><input class="si" id="t-tips" value="${esc(cfg.terminal?.tipOptions||'10,12.5,15')}" placeholder="10,12.5,15"></div>
         </div>
       </div>
@@ -1851,6 +2003,30 @@ function renderSet(){
   renderStaffMgr();renderMenuMgr();
 }
 
+function uploadVenueLogo(input){
+  const file=input.files[0];if(!file)return;
+  if(file.size>500000){toast('Logo too large — max 500KB','⚠️','t-o');return;}
+  const r=new FileReader();
+  r.onload=e=>{
+    const cfg=DB.get('cfg');
+    cfg.venueLogo=e.target.result;
+    DB.set('cfg',cfg);
+    updateTopbarLogo(cfg);
+    initStationScreen();
+    renderSet();
+    toast('Logo saved','🖼️','t-g');
+  };
+  r.readAsDataURL(file);
+}
+function removeVenueLogo(){
+  const cfg=DB.get('cfg');
+  delete cfg.venueLogo;
+  DB.set('cfg',cfg);
+  updateTopbarLogo(cfg);
+  initStationScreen();
+  renderSet();
+  toast('Logo removed','🗑️','t-b');
+}
 function saveVenue(){
   const cfg=DB.get('cfg');
   [['venueName','s-venueName'],['venueAddr','s-venueAddr'],['venueTel','s-venueTel'],['receiptFooter','s-receiptFooter']].forEach(([k,id])=>{const el=document.getElementById(id);if(el)cfg[k]=el.value;});
@@ -1864,9 +2040,20 @@ function saveVenue(){
 function saveCloud(){
   const cfg=DB.get('cfg');
   cfg.cloudMode=document.getElementById('s-mode')?.value==='cloud';
-  cfg.supabaseUrl=document.getElementById('s-su')?.value.trim()||'';
-  cfg.supabaseKey=document.getElementById('s-sk')?.value.trim()||'';
-  cfg.venueCode=document.getElementById('s-vc')?.value.trim()||'';
+  cfg.supabaseUrl=(document.getElementById('s-su')?.value||'').trim();
+  cfg.supabaseKey=(document.getElementById('s-sk')?.value||'').trim();
+  cfg.venueCode=(document.getElementById('s-vc')?.value||'').trim();
+  if(cfg.cloudMode){
+    if(!cfg.supabaseUrl){toast('Please enter your Supabase URL','⚠️','t-o');return;}
+    if(!cfg.supabaseKey){toast('Please enter your Anon Key','⚠️','t-o');return;}
+    if(!cfg.venueCode){toast('Please enter a Sync Code','⚠️','t-o');return;}
+    if(!cfg.supabaseUrl.startsWith('https://')){toast('URL must start with https://','⚠️','t-o');return;}
+    // Check Supabase library loaded
+    if(typeof window.supabase==='undefined'){
+      toast('Supabase library not loaded — check internet connection and refresh','❌','t-r');
+      return;
+    }
+  }
   cfg.sumupCode=document.getElementById('s-sm')?.value.trim()||'';
   if(cfg.cloudMode&&(!cfg.supabaseUrl||!cfg.supabaseKey||!cfg.venueCode)){
     toast('Enter Supabase URL, Anon Key & a Sync Code first','⚠️','t-o');return;
@@ -2215,7 +2402,7 @@ body{display:flex;flex-direction:column;}
 <div class="cd-welcome" id="cd-welcome">
   <div class="wl-logo">CBS</div>
   <div class="wl-name">${venueName}</div>
-  <div class="wl-sub">Customer Display · Powered by CBSystem PRO</div>
+  <div class="wl-sub">Welcome</div>
   <div class="wl-scroll">Welcome — please ask your server to take your order</div>
 </div>
 
