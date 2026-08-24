@@ -649,6 +649,9 @@ function updateTopbarLogo(cfg){
     if(name)name.textContent=cfg.venueName||'';
   }
   if(sb)sb.textContent=cfg.venueName||'';
+  // Always show/hide drawer button based on setting
+  const drawerBtn=document.getElementById('drawer-btn');
+  if(drawerBtn)drawerBtn.style.display=cfg.terminal?.cashDrawer?'flex':'none';
 }
 
 function initStationScreen(){
@@ -1243,13 +1246,250 @@ function buildTill(m,tb){
 // ═══════════════════════════════════════
 function buildWaiter(m,tb){
   m.innerHTML=`
-    <div class="view on" id="wpos-view" style="flex:1;overflow:hidden"><div class="pos-wrap" id="pos-wrap"></div></div>
+    <div class="view on" id="wpos-view" style="flex:1;overflow:hidden">
+      <!-- WAITER: Table select full screen first -->
+      <div id="wt-select" style="width:100%;height:100%;display:flex;flex-direction:column;padding:14px;gap:10px">
+        <div style="font-family:'Bebas Neue';font-size:2rem;letter-spacing:3px;color:var(--text)">Select a Table</div>
+        <div style="font-size:0.75rem;color:var(--text2);margin-top:-8px">Tap a table to start or view an order</div>
+        <div style="display:flex;gap:8px;margin-bottom:4px">
+          <button class="btn btn-o" id="wt-sec-r" onclick="setWSec('restaurant',this)" style="font-size:0.75rem;padding:5px 14px;background:var(--accent);color:#fff;border-color:var(--accent)">🍽 Restaurant</button>
+          <button class="btn btn-o" id="wt-sec-b" onclick="setWSec('bar',this)" style="font-size:0.75rem;padding:5px 14px">🍺 Bar</button>
+        </div>
+        <div id="wt-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;overflow-y:auto;flex:1"></div>
+      </div>
+      <!-- WAITER: Split view after table selected -->
+      <div id="wt-order" style="display:none;width:100%;height:100%;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg2)">
+          <button onclick="waiterBack()" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--text2);cursor:pointer;font-size:0.78rem">← Tables</button>
+          <div id="wt-title" style="font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:2px;color:var(--text)">Table 1</div>
+          <div id="wt-covers" style="font-size:0.7rem;color:var(--text2)"></div>
+        </div>
+        <div style="display:flex;flex:1;overflow:hidden">
+          <!-- Menu half -->
+          <div style="flex:1;overflow:hidden;border-right:1px solid var(--border);display:flex;flex-direction:column">
+            <div style="padding:8px 10px;border-bottom:1px solid var(--border);background:var(--bg2)">
+              <input class="si" id="wt-search" placeholder="Search menu..." style="width:100%;font-size:0.8rem" oninput="wFilterMenu(this.value)">
+              <div id="wt-cats" style="display:flex;gap:5px;overflow-x:auto;margin-top:6px;padding-bottom:2px"></div>
+            </div>
+            <div id="wt-menu" style="overflow-y:auto;flex:1;padding:8px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px"></div>
+          </div>
+          <!-- Order half -->
+          <div style="width:260px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden">
+            <div id="wt-items" style="flex:1;overflow-y:auto;padding:8px"></div>
+            <div style="padding:8px;border-top:1px solid var(--border);background:var(--bg2)">
+              <div id="wt-total" style="font-family:'Bebas Neue';font-size:1.6rem;color:var(--accent);text-align:center;margin-bottom:6px"></div>
+              <button onclick="wSendKitchen()" class="btn btn-b" style="width:100%;margin-bottom:5px;font-size:0.78rem">🍳 Send Kitchen</button>
+              <button onclick="wSendBar()" class="btn btn-p" style="width:100%;font-size:0.78rem">🍺 Send Bar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="view" id="wstat-view" style="flex:1;overflow-y:auto;padding:14px"></div>`;
   tb.innerHTML=`
     <button class="tab on" onclick="switchV('wpos-view',this)">🍽 Tables & Orders</button>
     <button class="tab" onclick="switchV('wstat-view',this);renderWS()">📋 Status</button>`;
   S.view='wpos-view';
-  buildPOSCore(document.getElementById('pos-wrap'),false); // no payment button
+  S.wSec='restaurant';
+  renderWaiterGrid();
+}
+
+function setWSec(sec,btn){
+  S.wSec=sec;
+  document.querySelectorAll('#wt-sec-r,#wt-sec-b').forEach(b=>{
+    b.style.background='';b.style.color='';b.style.borderColor='';
+  });
+  btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.borderColor='var(--accent)';
+  renderWaiterGrid();
+}
+
+function renderWaiterGrid(){
+  const g=document.getElementById('wt-grid');if(!g)return;
+  const cfg=DB.get('cfg');
+  const o=DB.get('tOrders');
+  const isBar=S.wSec==='bar';
+  const count=isBar?(cfg.barSeats||8):(cfg.tableCount||20);
+  const prefix=isBar?'B':'T';
+  const warnMins=cfg.tableWarnMins||90;const overMins=cfg.tableOverMins||120;
+  let html='';
+  for(let i=1;i<=count;i++){
+    const t=prefix+i;const ord=o[t];const has=ord?.items?.length;
+    const tot=has?calcTotal(ord.items,ord.discPct||0).grand:0;
+    const mins=has&&ord.openedAt?Math.floor((Date.now()-ord.openedAt)/60000):0;
+    const timerCls=has?(mins>=overMins?'t-over':mins>=warnMins?'t-warn':''):'';
+    const timerLbl=has&&mins>=warnMins?`<div style="font-size:0.55rem;font-weight:700;color:${mins>=overMins?'var(--red)':'#ffa500'}">${mins}m</div>`:'';
+    html+=`<div onclick="waiterSelectTable('${t}')" style="background:${has?'rgba(255,107,53,0.1)':'var(--card)'};border:2px solid ${has?'var(--accent)':'var(--border)'};border-radius:12px;padding:14px 10px;cursor:pointer;text-align:center;transition:all 0.15s" class="${timerCls}">
+      <div style="font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:2px;color:${has?'var(--accent)':'var(--text2)'}">${isBar?'B'+i:'T'+i}</div>
+      <div style="font-size:0.65rem;color:var(--text2)">${has?(ord.covers||1)+' cvr':'Free'}</div>
+      ${has?`<div style="font-size:0.78rem;font-weight:700;color:var(--accent)">${fmt(tot)}</div>`:''}
+      ${timerLbl}
+    </div>`;
+  }
+  g.innerHTML=html;
+}
+
+function waiterSelectTable(t){
+  S.selTable=t;
+  try{localStorage.setItem('cbs_selected_table',t);}catch(e){}
+  try{if(window._cdChannel)window._cdChannel.postMessage({type:'table_selected',table:t});}catch(e){}
+  const sel=document.getElementById('wt-select');
+  const ord=document.getElementById('wt-order');
+  if(sel)sel.style.display='none';
+  if(ord){ord.style.display='flex';}
+  const o=DB.get('tOrders');
+  if(!o[t])o[t]={items:[],covers:1,note:'',openedAt:Date.now(),orderType:'dineIn'};
+  DB.set('tOrders',o);
+  const title=document.getElementById('wt-title');
+  const cov=document.getElementById('wt-covers');
+  if(title)title.textContent=t.startsWith('B')?'Bar '+t.slice(1):'Table '+t.slice(1);
+  if(cov)cov.textContent=(o[t].covers||1)+' cover(s)';
+  renderWaiterMenu();renderWaiterOrder();
+}
+
+function waiterBack(){
+  S.selTable=null;
+  const sel=document.getElementById('wt-select');
+  const ord=document.getElementById('wt-order');
+  if(sel)sel.style.display='flex';
+  if(ord)ord.style.display='none';
+  renderWaiterGrid();
+}
+
+let _wCat='All';
+function renderWaiterMenu(){
+  const menu=DB.get('menu').filter(m=>m.available!==false);
+  const cats=['All',...new Set(menu.map(m=>m.category))];
+  const catEl=document.getElementById('wt-cats');
+  if(catEl)catEl.innerHTML=cats.map(c=>`<button onclick="setWCat('${c}',this)" style="white-space:nowrap;padding:3px 10px;border-radius:10px;border:1px solid ${c===_wCat?'var(--accent)':'var(--border)'};background:${c===_wCat?'rgba(255,107,53,0.15)':'var(--card)'};color:${c===_wCat?'var(--accent)':'var(--text2)'};font-size:0.68rem;cursor:pointer;flex-shrink:0">${c}</button>`).join('');
+  wFilterMenu(document.getElementById('wt-search')?.value||'');
+}
+function setWCat(c,btn){
+  _wCat=c;
+  document.getElementById('wt-cats').querySelectorAll('button').forEach(b=>{
+    const active=b.textContent===c;
+    b.style.borderColor=active?'var(--accent)':'var(--border)';
+    b.style.background=active?'rgba(255,107,53,0.15)':'var(--card)';
+    b.style.color=active?'var(--accent)':'var(--text2)';
+  });
+  wFilterMenu(document.getElementById('wt-search')?.value||'');
+}
+function wFilterMenu(q){
+  const menu=DB.get('menu').filter(m=>m.available!==false);
+  const filtered=menu.filter(m=>{
+    const matchCat=_wCat==='All'||m.category===_wCat;
+    const matchQ=!q||m.name.toLowerCase().includes(q.toLowerCase());
+    return matchCat&&matchQ;
+  });
+  const hh=isHappyHour();
+  const g=document.getElementById('wt-menu');if(!g)return;
+  g.innerHTML=filtered.map(m=>{
+    const price=hhPrice(m);
+    const discounted=hh&&(m.dest==='bar'||m.happyHour);
+    return`<div onclick="wAddItem('${m.id}')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 8px;cursor:pointer;text-align:center;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      ${m.img?`<img src="${m.img}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;margin-bottom:4px">`:`<div style="font-size:1.6rem">${m.emoji}</div>`}
+      <div style="font-size:0.72rem;font-weight:600;color:var(--text);margin-top:2px">${esc(m.name)}</div>
+      <div style="font-size:0.78rem;font-weight:700;color:var(--accent)">${fmt(price)}${discounted?'<span style="font-size:0.52rem;color:var(--gold);margin-left:3px">HH</span>':''}</div>
+      ${(m.allergens&&m.allergens.length)?`<div style="font-size:0.5rem;color:var(--accent)">${m.allergens.slice(0,2).join(', ')}${m.allergens.length>2?'…':''}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function wAddItem(id){
+  if(!S.selTable)return;
+  const item=DB.get('menu').find(m=>m.id===id);if(!item)return;
+  const cfg=DB.get('cfg');
+  if(item.alcohol&&cfg.challenge25!==false){
+    showModal(`<div class="ch25-wrap">
+      <div class="ch25-icon">🪪</div>
+      <div class="ch25-title">Challenge 25</div>
+      <div class="ch25-sub"><strong style="color:var(--text)">${esc(item.name)}</strong> — Does the customer appear under 25? Ask for ID if yes.</div>
+      <div class="ch25-btns">
+        <button class="btn" style="flex:1;background:var(--red);color:#fff;border-color:var(--red)" onclick="closeModal();toast('Sale refused','🚫','t-r')">🚫 Refuse</button>
+        <button class="btn btn-g" style="flex:1" onclick="closeModal();_wAddItem('${id}')">✅ ID Checked</button>
+      </div></div>`);
+    return;
+  }
+  _wAddItem(id);
+}
+function _wAddItem(id){
+  const item=DB.get('menu').find(m=>m.id===id);if(!item||!S.selTable)return;
+  const price=hhPrice(item);
+  const o=DB.get('tOrders');
+  const ex=o[S.selTable].items.find(i=>i.id===id&&!i.sent&&!i.note);
+  if(ex)ex.qty++;
+  else o[S.selTable].items.push({id,name:item.name,price,qty:1,dest:item.dest,sent:false,emoji:item.emoji,note:'',by:S.user?.name,at:Date.now(),alcohol:item.alcohol||false});
+  DB.set('tOrders',o);
+  renderWaiterOrder();
+}
+function renderWaiterOrder(){
+  if(!S.selTable)return;
+  const o=DB.get('tOrders');const ord=o[S.selTable];
+  const items=ord?.items||[];
+  const t=calcTotal(items,ord?.discPct||0);
+  const el=document.getElementById('wt-items');
+  const tot=document.getElementById('wt-total');
+  if(tot)tot.textContent=fmt(t.grand);
+  if(!el)return;
+  if(!items.length){el.innerHTML='<div style="text-align:center;color:var(--text2);font-size:0.78rem;padding:20px">No items yet</div>';return;}
+  el.innerHTML=items.map((item,i)=>`<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--border)">
+    <div style="font-size:1rem">${item.emoji||'🍽'}</div>
+    <div style="flex:1">
+      <div style="font-size:0.78rem;font-weight:600;color:${item.sent?'var(--text2)':'var(--text)'}">${esc(item.name)}${item.sent?' ✓':''}</div>
+      ${item.note?`<div style="font-size:0.62rem;color:#ffd700">📝 ${esc(item.note)}</div>`:''}
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      ${!item.sent?`<button onclick="wQty(${i},-1)" style="width:20px;height:20px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-size:0.7rem;display:flex;align-items:center;justify-content:center">−</button>`:''}
+      <div style="font-size:0.78rem;font-weight:700;min-width:16px;text-align:center">${item.qty}</div>
+      ${!item.sent?`<button onclick="wQty(${i},1)" style="width:20px;height:20px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-size:0.7rem;display:flex;align-items:center;justify-content:center">+</button>`:''}
+    </div>
+    <div style="font-size:0.72rem;font-weight:700;color:var(--accent)">${fmt(item.price*item.qty)}</div>
+    ${!item.sent?`<button onclick="wNote(${i})" style="font-size:0.6rem;padding:2px 6px;border-radius:5px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer" title="Add note">📝</button>`:''}
+  </div>`).join('');
+}
+function wQty(idx,delta){
+  if(!S.selTable)return;
+  const o=DB.get('tOrders');const items=o[S.selTable].items;
+  if(!items[idx])return;
+  items[idx].qty+=delta;
+  if(items[idx].qty<=0)items.splice(idx,1);
+  DB.set('tOrders',o);renderWaiterOrder();
+}
+function wNote(idx){
+  if(!S.selTable)return;
+  const o=DB.get('tOrders');const item=o[S.selTable].items[idx];if(!item)return;
+  showModal(`<div class="modal-t">📝 Note — ${esc(item.name)}</div>
+    <textarea id="wt-note-txt" rows="3" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:9px;color:var(--text);font-size:0.82rem;outline:none;font-family:'DM Sans'">${esc(item.note||'')}</textarea>
+    <div style="display:flex;gap:7px;margin-top:10px">
+      <button class="btn btn-o" style="flex:1" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-a" style="flex:2" onclick="saveWNote(${idx})">✓ Save</button>
+    </div>`);
+}
+function saveWNote(idx){
+  if(!S.selTable)return;
+  const o=DB.get('tOrders');const item=o[S.selTable].items[idx];if(!item)return;
+  item.note=document.getElementById('wt-note-txt')?.value.trim()||'';
+  DB.set('tOrders',o);closeModal();renderWaiterOrder();
+}
+function wSendKitchen(){
+  if(!S.selTable)return;
+  const o=DB.get('tOrders');const ord=o[S.selTable];
+  const un=ord.items.filter(i=>i.dest==='kitchen'&&!i.sent);
+  if(!un.length){toast('No unsent kitchen items','ℹ️','t-b');return;}
+  const k=DB.get('kOrders');
+  k.push({id:nid(),table:S.selTable,items:un.map(i=>({...i})),status:'new',time:Date.now(),staff:S.user?.name,covers:ord.covers||1,note:ord.note||'',orderType:ord.orderType||'dineIn'});
+  DB.set('kOrders',k);un.forEach(i=>{const x=ord.items.find(x=>x.id===i.id&&!x.sent);if(x)x.sent=true;});
+  DB.set('tOrders',o);renderWaiterOrder();updBadges();
+  toast(un.length+' item(s) → Kitchen','🍳','t-g');
+}
+function wSendBar(){
+  if(!S.selTable)return;
+  const o=DB.get('tOrders');const ord=o[S.selTable];
+  const un=ord.items.filter(i=>i.dest==='bar'&&!i.sent);
+  if(!un.length){toast('No unsent bar items','ℹ️','t-b');return;}
+  const b=DB.get('bOrders');
+  b.push({id:nid(),table:S.selTable,items:un.map(i=>({...i})),status:'new',time:Date.now(),staff:S.user?.name});
+  DB.set('bOrders',b);un.forEach(i=>{const x=ord.items.find(x=>x.id===i.id&&!x.sent);if(x)x.sent=true;});
+  DB.set('tOrders',o);renderWaiterOrder();updBadges();
+  toast(un.length+' item(s) → Bar','🍺','t-g');
 }
 
 function renderWS(){
