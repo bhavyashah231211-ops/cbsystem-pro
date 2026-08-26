@@ -1258,26 +1258,26 @@ function buildWaiter(m,tb){
         <div id="wt-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;overflow-y:auto;flex:1"></div>
       </div>
       <!-- WAITER: Split view after table selected -->
-      <div id="wt-order" style="display:none;width:100%;height:100%;flex-direction:column">
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg2)">
+      <div id="wt-order" style="display:none;width:100%;height:100%;flex-direction:column;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0">
           <button onclick="waiterBack()" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--text2);cursor:pointer;font-size:0.78rem">← Tables</button>
           <div id="wt-title" style="font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:2px;color:var(--text)">Table 1</div>
           <div id="wt-covers" style="font-size:0.7rem;color:var(--text2)"></div>
         </div>
-        <div style="display:flex;flex:1;overflow:hidden">
+        <div style="display:flex;flex:1;overflow:hidden;min-height:0">
           <!-- Menu half -->
-          <div style="flex:1;overflow:hidden;border-right:1px solid var(--border);display:flex;flex-direction:column">
-            <div style="padding:8px 10px;border-bottom:1px solid var(--border);background:var(--bg2)">
+          <div style="flex:1;overflow:hidden;border-right:1px solid var(--border);display:flex;flex-direction:column;min-width:0">
+            <div style="padding:8px 10px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0">
               <input class="si" id="wt-search" placeholder="Search menu..." style="width:100%;font-size:0.8rem" oninput="wFilterMenu(this.value)">
-              <div id="wt-cats" style="display:flex;gap:5px;overflow-x:auto;margin-top:6px;padding-bottom:2px"></div>
+              <div id="wt-cats" style="display:flex;gap:5px;overflow-x:auto;margin-top:6px;padding-bottom:2px;flex-shrink:0"></div>
             </div>
-            <div id="wt-menu" style="overflow-y:auto;flex:1;padding:8px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px"></div>
+            <div id="wt-menu" style="overflow-y:auto;flex:1;padding:8px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px;align-content:start"></div>
           </div>
           <!-- Order half -->
-          <div style="width:260px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden">
-            <div id="wt-items" style="flex:1;overflow-y:auto;padding:8px"></div>
-            <div style="padding:8px;border-top:1px solid var(--border);background:var(--bg2)">
-              <div id="wt-total" style="font-family:'Bebas Neue';font-size:1.6rem;color:var(--accent);text-align:center;margin-bottom:6px"></div>
+          <div style="width:260px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;min-height:0">
+            <div id="wt-items" style="flex:1;overflow-y:auto;padding:8px;min-height:0"></div>
+            <div style="padding:8px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0">
+              <div id="wt-total" style="font-family:'Bebas Neue';font-size:1.6rem;color:var(--accent);text-align:center;margin-bottom:6px">£0.00</div>
               <button onclick="wSendKitchen()" class="btn btn-b" style="width:100%;margin-bottom:5px;font-size:0.78rem">🍳 Send Kitchen</button>
               <button onclick="wSendBar()" class="btn btn-p" style="width:100%;font-size:0.78rem">🍺 Send Bar</button>
             </div>
@@ -1343,7 +1343,14 @@ function waiterSelectTable(t){
   const cov=document.getElementById('wt-covers');
   if(title)title.textContent=t.startsWith('B')?'Bar '+t.slice(1):'Table '+t.slice(1);
   if(cov)cov.textContent=(o[t].covers||1)+' cover(s)';
-  renderWaiterMenu();renderWaiterOrder();
+  // Must render menu AFTER the elements are visible
+  setTimeout(()=>{
+    const menuGrid=document.getElementById('wt-menu');
+    if(menuGrid)menuGrid.style.display='grid';
+    _wCat='All';
+    renderWaiterMenu();
+    renderWaiterOrder();
+  },100);
 }
 
 function waiterBack(){
