@@ -1,0 +1,787 @@
+[self-order.html](https://github.com/user-attachments/files/31453883/self-order.html)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Order Here</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+:root{
+  --bg:#07070d;--bg2:#0f0f18;--card:#181828;--card2:#1e1e30;--border:#252540;
+  --accent:#ff6b35;--accent2:#ffa500;--green:#2dd4a0;--blue:#4a9eff;
+  --red:#ff4560;--bar:#9b59b6;--pink:#f472b6;--text:#f0f0f8;--text2:#8888aa;--gold:#ffd700;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);user-select:none;}
+body{display:flex;flex-direction:column;}
+
+/* ── SCREENS ── */
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);transition:opacity 0.35s;z-index:10;}
+.screen.hide{opacity:0;pointer-events:none;}
+
+/* WELCOME */
+.so-logo{font-family:'Bebas Neue';font-size:5rem;color:var(--accent);letter-spacing:10px;line-height:1;}
+.so-venue{font-size:0.9rem;color:var(--text2);letter-spacing:4px;text-transform:uppercase;margin-top:4px;}
+.so-tagline{font-size:0.72rem;color:var(--border);letter-spacing:2px;margin-top:10px;margin-bottom:40px;}
+.so-type-row{display:flex;gap:16px;}
+.so-type-btn{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--card);border:2px solid var(--border);border-radius:22px;padding:28px 36px;cursor:pointer;transition:all 0.2s;min-width:160px;}
+.so-type-btn:hover,.so-type-btn:active{transform:translateY(-3px);}
+.so-type-btn.eat{border-color:var(--blue);}
+.so-type-btn.eat:hover{box-shadow:0 0 0 3px rgba(74,158,255,0.2);}
+.so-type-btn.ta{border-color:var(--accent2);}
+.so-type-btn.ta:hover{box-shadow:0 0 0 3px rgba(255,165,0,0.2);}
+.so-type-ic{font-size:3rem;}
+.so-type-lbl{font-family:'Bebas Neue';font-size:1.5rem;letter-spacing:2px;}
+.so-type-sub{font-size:0.62rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
+
+/* TABLE SELECT */
+.ts-title{font-family:'Bebas Neue';font-size:2rem;color:var(--text);letter-spacing:4px;margin-bottom:6px;}
+.ts-sub{font-size:0.72rem;color:var(--text2);margin-bottom:24px;text-align:center;}
+.ts-tabs{display:flex;gap:8px;margin-bottom:18px;}
+.ts-tab{padding:7px 22px;border-radius:10px;font-size:0.78rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text2);transition:0.15s;}
+.ts-tab.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.ts-grid{display:grid;grid-template-columns:repeat(6,58px);gap:8px;max-height:320px;overflow-y:auto;scrollbar-width:thin;}
+.ts-cell{width:58px;height:58px;background:var(--card);border:2px solid var(--border);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:0.18s;}
+.ts-cell:hover,.ts-cell:active{border-color:var(--blue);transform:scale(1.06);}
+.ts-cell.occ{border-color:var(--accent);background:rgba(255,107,53,0.08);}
+.ts-cell.sel{border-color:var(--blue);box-shadow:0 0 0 3px rgba(74,158,255,0.25);background:rgba(74,158,255,0.08);}
+.ts-num{font-family:'Bebas Neue';font-size:1.5rem;line-height:1;}
+.ts-lbl{font-size:0.44rem;color:var(--text2);text-transform:uppercase;}
+.ts-back{position:absolute;top:18px;left:18px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 14px;font-size:0.78rem;cursor:pointer;color:var(--text2);}
+.ts-next{margin-top:22px;padding:13px 48px;background:var(--blue);color:#fff;border:none;border-radius:13px;font-size:1rem;font-weight:700;cursor:pointer;font-family:'DM Sans';}
+.ts-next:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* MENU */
+.so-app{display:flex;flex-direction:column;height:100%;background:var(--bg);}
+.so-topbar{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;height:52px;gap:10px;flex-shrink:0;}
+.so-tlogo{font-family:'Bebas Neue';font-size:1.4rem;color:var(--accent);letter-spacing:2px;}
+.so-tbadge{font-size:0.65rem;font-weight:700;padding:3px 9px;border-radius:8px;background:rgba(74,158,255,0.15);color:var(--blue);}
+.so-ttype{font-size:0.65rem;font-weight:700;padding:3px 9px;border-radius:8px;}
+.so-ttype.eat{background:rgba(74,158,255,0.12);color:var(--blue);}
+.so-ttype.ta{background:rgba(255,165,0,0.12);color:var(--accent2);}
+.so-new-order{margin-left:auto;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:0.68rem;cursor:pointer;color:var(--text2);}
+.so-body{display:flex;flex:1;overflow:hidden;}
+.so-menu{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.so-catbar{display:flex;gap:5px;overflow-x:auto;padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0;scrollbar-width:none;}
+.so-catbtn{padding:5px 14px;border-radius:16px;font-size:0.68rem;font-weight:600;cursor:pointer;border:none;background:var(--card);color:var(--text2);white-space:nowrap;transition:0.15s;flex-shrink:0;}
+.so-catbtn.on{background:var(--accent);color:#fff;}
+.so-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;padding:10px 12px;overflow-y:auto;flex:1;}
+.so-item{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:12px 10px;cursor:pointer;transition:0.18s;position:relative;}
+.so-item:hover{border-color:var(--accent);transform:translateY(-2px);}
+.so-item.in-cart{border-color:var(--green);background:rgba(45,212,160,0.05);}
+.so-item-dest{position:absolute;top:6px;right:6px;font-size:0.45rem;padding:2px 4px;border-radius:6px;font-weight:700;text-transform:uppercase;}
+.dest-bar{background:rgba(155,89,182,0.2);color:var(--bar);}
+.dest-kit{background:rgba(45,212,160,0.2);color:var(--green);}
+.so-emoj{font-size:2rem;margin-bottom:6px;display:block;}
+.so-iname{font-size:0.77rem;font-weight:600;margin-bottom:2px;}
+.so-icat{font-size:0.56rem;color:var(--text2);margin-bottom:4px;}
+.so-iprice{font-size:0.92rem;font-weight:700;color:var(--accent);}
+.so-qty-row{display:flex;align-items:center;gap:6px;margin-top:7px;}
+.so-qb{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:0.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.so-qb:active{background:var(--accent);color:#fff;}
+.so-qn{font-family:'JetBrains Mono';font-size:0.88rem;font-weight:700;min-width:18px;text-align:center;}
+
+/* CART PANEL */
+.so-cart{width:275px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;}
+.so-cart-hdr{padding:12px 14px;border-bottom:1px solid var(--border);}
+.so-cart-ttl{font-family:'Bebas Neue';font-size:1.3rem;margin-bottom:2px;}
+.so-cart-sub{font-size:0.62rem;color:var(--text2);}
+.so-cart-items{flex:1;overflow-y:auto;padding:6px 14px;}
+.so-ci{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);}
+.so-ci-info{flex:1;font-size:0.75rem;}
+.so-ci-name{font-weight:600;}
+.so-ci-price{font-size:0.7rem;color:var(--accent);}
+.so-ci-rm{color:var(--red);cursor:pointer;font-size:0.85rem;padding:2px 4px;}
+.so-cart-foot{padding:12px 14px;border-top:1px solid var(--border);}
+.so-tr{display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text2);margin-bottom:3px;}
+.so-tr.grand{color:var(--text);font-weight:700;font-size:1rem;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
+.so-place-btn{width:100%;margin-top:10px;padding:14px;background:var(--green);color:#000;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:'DM Sans';}
+.so-place-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.so-empty-cart{text-align:center;color:var(--text2);font-size:0.75rem;padding:30px 10px;}
+
+/* CONFIRM SCREEN */
+.so-confirm{text-align:center;gap:14px;}
+.conf-ic{font-size:5rem;}
+.conf-title{font-family:'Bebas Neue';font-size:2.8rem;color:var(--green);letter-spacing:4px;}
+.conf-msg{font-size:0.88rem;color:var(--text2);max-width:340px;line-height:1.6;}
+.conf-ref{font-family:'JetBrains Mono';font-size:1.4rem;color:var(--accent);margin:6px 0;}
+.conf-again{margin-top:24px;padding:12px 36px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:'DM Sans';}
+
+@keyframes bounceIn{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+.conf-ic{animation:bounceIn 0.5s ease;}
+
+/* PAYMENT METHOD SCREEN */
+.pay-back{position:absolute;top:18px;left:18px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 14px;font-size:0.78rem;cursor:pointer;color:var(--text2);}
+.pay-title{font-family:'Bebas Neue';font-size:2rem;color:var(--text);letter-spacing:4px;margin-bottom:4px;}
+.pay-sub{font-size:0.72rem;color:var(--text2);margin-bottom:8px;text-align:center;}
+.pay-total{font-family:'JetBrains Mono';font-size:2.1rem;font-weight:700;color:var(--accent);margin-bottom:30px;}
+.pay-opts{display:flex;gap:16px;}
+.pay-opt{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--card);border:2px solid var(--border);border-radius:22px;padding:28px 34px;cursor:pointer;transition:all 0.2s;min-width:170px;}
+.pay-opt:hover,.pay-opt:active{transform:translateY(-3px);}
+.pay-opt.card{border-color:var(--green);}
+.pay-opt.card:hover{box-shadow:0 0 0 3px rgba(45,212,160,0.2);}
+.pay-opt.till{border-color:var(--accent2);}
+.pay-opt.till:hover{box-shadow:0 0 0 3px rgba(255,165,0,0.2);}
+.pay-opt-ic{font-size:3rem;}
+.pay-opt-lbl{font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:2px;}
+.pay-opt-sub{font-size:0.6rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;text-align:center;max-width:140px;}
+
+/* CARD MACHINE SCREEN */
+.card-ic-wrap{width:110px;height:110px;border-radius:50%;background:rgba(45,212,160,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:24px;}
+.card-ic{font-size:3.6rem;animation:cardPulse 1.4s ease-in-out infinite;}
+@keyframes cardPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.12);opacity:0.7}}
+.card-status{font-family:'Bebas Neue';font-size:1.8rem;letter-spacing:3px;color:var(--text);margin-bottom:8px;}
+.card-sub{font-size:0.76rem;color:var(--text2);margin-bottom:6px;text-align:center;}
+.card-amt{font-family:'JetBrains Mono';font-size:1.6rem;font-weight:700;color:var(--green);margin-top:10px;}
+.card-term{font-size:0.62rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-top:22px;}
+.card-cancel{margin-top:26px;padding:9px 26px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:0.75rem;cursor:pointer;color:var(--text2);font-family:'DM Sans';}
+
+/* BOOT / LOCKED SCREENS */
+.boot-spin{width:64px;height:64px;border:5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.9s linear infinite;margin-bottom:22px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.boot-txt{font-family:'Bebas Neue';font-size:1.5rem;letter-spacing:3px;color:var(--text2);}
+.lock-ic{font-size:4.5rem;margin-bottom:18px;}
+.lock-title{font-family:'Bebas Neue';font-size:2rem;letter-spacing:3px;color:var(--accent2);margin-bottom:10px;}
+.lock-msg{font-size:0.85rem;color:var(--text2);max-width:340px;line-height:1.7;text-align:center;}
+.lock-retry{margin-top:24px;padding:11px 30px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:0.8rem;cursor:pointer;color:var(--text);font-family:'DM Sans';}
+.err-msg{font-size:0.8rem;color:var(--red);max-width:320px;text-align:center;margin-top:10px;line-height:1.6;}
+.err-msg.hide{display:none;}
+</style>
+</head>
+<body>
+<!-- ── BOOT / LOADING SCREEN ── -->
+<div class="screen" id="sc-boot">
+  <div class="boot-spin"></div>
+  <div class="boot-txt">CONNECTING…</div>
+  <div class="err-msg hide" id="boot-err"></div>
+</div>
+
+<!-- ── LOCKED (staff hasn't started this table yet) ── -->
+<div class="screen hide" id="sc-locked">
+  <div class="lock-ic">🔒</div>
+  <div class="lock-title">Not Started Yet</div>
+  <div class="lock-msg">Please ask a member of staff to start ordering for this table. Once they do, this page will unlock automatically — no need to rescan.</div>
+  <button class="lock-retry" onclick="boot()">↻ Check Again</button>
+</div>
+
+<!-- ── WELCOME SCREEN (fallback when opened without a table link) ── -->
+<div class="screen hide" id="sc-welcome" style="position:relative;overflow:hidden">
+  <!-- Advert background slideshow (populated by JS from cfg.adverts) -->
+  <div id="so-advert-bg" style="position:absolute;inset:0;z-index:0;display:none">
+    <div id="so-advert-slides"></div>
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.5);z-index:1"></div>
+  </div>
+  <!-- Content -->
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%">
+    <div class="so-company" id="so-company-badge" style="position:absolute;top:14px;right:18px;font-family:'Bebas Neue';font-size:0.9rem;color:rgba(255,255,255,0.4);letter-spacing:3px"></div>
+    <div id="so-logo-wrap">
+      <div class="so-logo" id="so-logo-text">Self Order</div>
+    </div>
+    <div class="so-venue" id="so-venue-name">Restaurant</div>
+    <div class="so-tagline">Touch to Begin</div>
+    <div class="so-type-row">
+      <div class="so-type-btn eat" onclick="chooseType('dineIn')">
+        <div class="so-type-ic">🍽️</div>
+        <div class="so-type-lbl">Eat In</div>
+        <div class="so-type-sub">Dine at your table</div>
+      </div>
+      <div class="so-type-btn ta" onclick="chooseType('takeaway')">
+        <div class="so-type-ic">🥡</div>
+        <div class="so-type-lbl">Takeaway</div>
+        <div class="so-type-sub">Pick up your order</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TABLE SELECT (only shown for Eat In, fallback mode) ── -->
+<div class="screen hide" id="sc-table">
+  <button class="ts-back" onclick="goScreen('sc-welcome')">← Back</button>
+  <div class="ts-title">Choose Your Table</div>
+  <div class="ts-sub">Tap your table number</div>
+  <div class="ts-tabs">
+    <button class="ts-tab on" id="tst-r" onclick="showTSection('restaurant',this)">🍽 Restaurant</button>
+    <button class="ts-tab" id="tst-b" onclick="showTSection('bar',this)">🍺 Bar</button>
+  </div>
+  <div class="ts-grid" id="ts-grid"></div>
+  <button class="ts-next" id="ts-next" onclick="goToMenu()" disabled>Select a table to continue →</button>
+</div>
+
+<!-- ── MENU / ORDER APP ── -->
+<div class="so-app hide" id="sc-app">
+  <div class="so-topbar">
+    <div class="so-tlogo">CBS</div>
+    <div class="so-tbadge" id="so-tbadge">Table —</div>
+    <div class="so-ttype eat" id="so-ttype">🍽 Eat In</div>
+    <button class="so-new-order" id="so-new-order-btn" style="display:none" onclick="goScreen('sc-welcome')">🔄 New Order</button>
+  </div>
+  <div class="so-body">
+    <div class="so-menu">
+      <div class="so-catbar" id="so-catbar"></div>
+      <div class="so-items" id="so-items"></div>
+    </div>
+    <div class="so-cart">
+      <div class="so-cart-hdr">
+        <div class="so-cart-ttl">Your Order</div>
+        <div class="so-cart-sub" id="so-cart-count">Nothing added yet</div>
+      </div>
+      <div class="so-cart-items" id="so-cart-items">
+        <div class="so-empty-cart">Browse the menu and add items</div>
+      </div>
+      <div class="so-cart-foot">
+        <div class="so-tr"><span>Subtotal</span><span id="so-sub">£0.00</span></div>
+        <div class="so-tr"><span id="so-vat-lbl">VAT (20%)</span><span id="so-vat">£0.00</span></div>
+        <div class="so-tr" id="so-svc-row" style="display:none"><span id="so-svc-lbl">Service (10%)</span><span id="so-svc">£0.00</span></div>
+        <div class="so-tr grand"><span>Total</span><span id="so-grand">£0.00</span></div>
+        <button class="so-place-btn" id="so-place-btn" onclick="goToPayment()" disabled>Place Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAYMENT METHOD SCREEN ── -->
+<div class="screen hide" id="sc-payment">
+  <button class="pay-back" onclick="goScreen('sc-app')">← Back to Order</button>
+  <div class="pay-title">How Would You Like to Pay?</div>
+  <div class="pay-sub">Total due</div>
+  <div class="pay-total" id="pay-total">£0.00</div>
+  <div class="pay-opts">
+    <div class="pay-opt card" onclick="selectPayMethod('card')">
+      <div class="pay-opt-ic">💳</div>
+      <div class="pay-opt-lbl">Pay by Card</div>
+      <div class="pay-opt-sub">Tap, insert or swipe on the card machine now</div>
+    </div>
+    <div class="pay-opt till" onclick="selectPayMethod('till')">
+      <div class="pay-opt-ic">🧾</div>
+      <div class="pay-opt-lbl">Pay at Till</div>
+      <div class="pay-opt-sub">Order sent now — pay a staff member at the till</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CARD MACHINE SCREEN ── -->
+<div class="screen hide so-confirm" id="sc-card">
+  <div class="card-ic-wrap"><div class="card-ic" id="card-ic">💳</div></div>
+  <div class="card-status" id="card-status">CONNECTING…</div>
+  <div class="card-sub" id="card-sub">Please wait while we connect to the card machine</div>
+  <div class="card-amt" id="card-amt">£0.00</div>
+  <div class="card-term" id="card-term">Card Machine</div>
+  <button class="card-cancel" id="card-cancel" onclick="cancelCardPayment()">Cancel</button>
+</div>
+
+<!-- ── CONFIRMATION SCREEN ── -->
+<div class="screen hide so-confirm" id="sc-confirm">
+  <div class="conf-ic">✅</div>
+  <div class="conf-title">Order Placed!</div>
+  <div class="conf-msg" id="conf-msg">Your order has been sent to the kitchen and bar. Please wait — your server will bring it to you.</div>
+  <div class="conf-ref" id="conf-ref">#—</div>
+  <button class="conf-again" id="conf-again-btn" onclick="afterConfirm()">Order More</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// ONE-TIME SETUP — fill these in from CBSystem → Settings → Cloud & Sync
+// Use the EXACT same values you entered in the main app.
+// ══════════════════════════════════════════════════════════
+const SB_URL = 'YOUR_SUPABASE_URL';        // e.g. https://xxxx.supabase.co
+const SB_KEY = 'YOUR_SUPABASE_ANON_KEY';   // the "anon public" key
+const VENUE_CODE = 'YOUR_SYNC_CODE';       // the Sync Code from Settings
+// ══════════════════════════════════════════════════════════
+
+const params = new URLSearchParams(location.search);
+// Accepts ?t=T5 / ?t=B3 (raw table key — what CBSystem's QR generator uses),
+// or ?table=5 (restaurant table number) / ?bar=3 (bar seat number) for manual links.
+let URL_TABLE = params.get('t');
+if(!URL_TABLE && params.get('table')) URL_TABLE = 'T'+params.get('table');
+if(!URL_TABLE && params.get('bar')) URL_TABLE = 'B'+params.get('bar');
+
+let cfg = {};
+let MENU = [];
+let CUR = '£';
+let VAT_R = 0.20;
+let SVC_EN = false;
+let SVC_R = 0.10;
+let TABLE_COUNT = 20;
+let BAR_SEATS = 8;
+let sb = null;
+let _channel = null;
+
+const fmt = n => CUR + (parseFloat(n) || 0).toFixed(2);
+const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+let STATE = { orderType: 'dineIn', table: null, tableSection: 'restaurant', cart: [], cat: 'All', payMethod: null, qrMode: false, tOrdersCache: {} };
+let _cardT1 = null, _cardT2 = null, _cardT3 = null;
+
+function goScreen(id) {
+  document.querySelectorAll('.screen,.so-app').forEach(el => el.classList.add('hide'));
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('hide');
+}
+
+// ══════════════════════════════════════════════════════════
+// BOOT — connect, load menu/config, resolve table lock state
+// ══════════════════════════════════════════════════════════
+async function boot() {
+  goScreen('sc-boot');
+  const errEl = document.getElementById('boot-err');
+  if (errEl) errEl.classList.add('hide');
+
+  if (!SB_URL.startsWith('http') || SB_KEY === 'YOUR_SUPABASE_ANON_KEY' || VENUE_CODE === 'YOUR_SYNC_CODE') {
+    if (errEl) { errEl.textContent = "This ordering page hasn't been set up yet. A staff member needs to add the Supabase URL, key, and Sync Code at the top of self-order.html — the same details used in Settings → Cloud & Sync."; errEl.classList.remove('hide'); }
+    return;
+  }
+  if (typeof window.supabase === 'undefined') {
+    if (errEl) { errEl.textContent = 'Could not load — check your internet connection and try again.'; errEl.classList.remove('hide'); }
+    return;
+  }
+  try { sb = window.supabase.createClient(SB_URL, SB_KEY); } catch (e) {
+    if (errEl) { errEl.textContent = 'Could not connect. Please try again.'; errEl.classList.remove('hide'); }
+    return;
+  }
+
+  try {
+    const { data, error } = await sb.from('cbs_state').select('data').eq('id', VENUE_CODE).maybeSingle();
+    if (error || !data || !data.data) throw error || new Error('No data');
+    applyRemoteData(data.data);
+  } catch (e) {
+    if (errEl) { errEl.textContent = 'Could not load the menu. Please check your connection and tap Check Again, or ask a member of staff.'; errEl.classList.remove('hide'); }
+    return;
+  }
+
+  subscribeRealtime();
+
+  if (URL_TABLE) {
+    STATE.qrMode = true;
+    STATE.orderType = 'dineIn';
+    const tOrd = STATE.tOrdersCache[URL_TABLE];
+    if (tOrd && tOrd.qrOrder === true) {
+      STATE.table = URL_TABLE;
+      goToMenu();
+    } else {
+      showLocked();
+    }
+  } else {
+    // No table link — behave like a normal walk-up kiosk (e.g. a stand at the counter)
+    STATE.qrMode = false;
+    const btn = document.getElementById('so-new-order-btn'); if (btn) btn.style.display = 'block';
+    goScreen('sc-welcome');
+  }
+}
+
+function applyRemoteData(d) {
+  cfg = d.cfg || {};
+  MENU = (d.menu || []).filter(m => m.available !== false);
+  STATE.tOrdersCache = d.tOrders || {};
+  CUR = cfg.currency || '£';
+  VAT_R = (cfg.vatRate || 20) / 100;
+  SVC_EN = !!cfg.serviceCharge;
+  SVC_R = (cfg.serviceChargeRate || 10) / 100;
+  TABLE_COUNT = cfg.tableCount || 20;
+  BAR_SEATS = cfg.barSeats || 8;
+  document.title = (cfg.venueName || 'Restaurant') + ' — Order Here';
+  const v = document.getElementById('so-venue-name'); if (v) v.textContent = cfg.venueName || 'Restaurant';
+  // Load venue logo
+  const logoWrap = document.getElementById('so-logo-wrap');
+  const logoText = document.getElementById('so-logo-text');
+  if(cfg.venueLogo && logoWrap){
+    logoWrap.innerHTML = `<img src="${cfg.venueLogo}" style="max-height:100px;max-width:280px;object-fit:contain;border-radius:8px;margin-bottom:8px">`;
+  }
+  // Load adverts into self-order welcome screen
+  const adverts = cfg.adverts || [];
+  const advBg = document.getElementById('so-advert-bg');
+  const advSlides = document.getElementById('so-advert-slides');
+  if(adverts.length && advBg && advSlides){
+    advBg.style.display = 'block';
+    advSlides.innerHTML = adverts.map((a,i) => a.type === 'video'
+      ? `<video id="soav${i}" src="${a.src}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:${i===0?'block':'none'}" autoplay muted loop playsinline></video>`
+      : `<img id="soav${i}" src="${a.src}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:${i===0?'block':'none'}">`
+    ).join('');
+    if(adverts.length > 1){
+      let soAdvIdx = 0;
+      setInterval(() => {
+        const cur = document.getElementById('soav'+soAdvIdx);
+        if(cur) cur.style.display = 'none';
+        soAdvIdx = (soAdvIdx+1) % adverts.length;
+        const nxt = document.getElementById('soav'+soAdvIdx);
+        if(nxt){ nxt.style.display = 'block'; if(nxt.tagName==='VIDEO'){nxt.currentTime=0;nxt.play();} }
+      }, cfg.advertDuration || 6000);
+    }
+  }
+  const vl = document.getElementById('so-vat-lbl'); if (vl) vl.textContent = 'VAT (' + (cfg.vatRate || 20) + '%)';
+  const sl = document.getElementById('so-svc-lbl'); if (sl) sl.textContent = 'Service (' + (cfg.serviceChargeRate || 10) + '%)';
+  const sr = document.getElementById('so-svc-row'); if (sr) sr.style.display = SVC_EN ? 'flex' : 'none';
+}
+
+function subscribeRealtime() {
+  if (_channel) { try { _channel.unsubscribe(); } catch (e) {} }
+  _channel = sb.channel('cbs_room_' + VENUE_CODE)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'cbs_state', filter: 'id=eq.' + VENUE_CODE }, payload => {
+      const remote = payload.new && payload.new.data;
+      if (!remote) return;
+      applyRemoteData(remote);
+      // If we're sitting on the locked screen, check whether staff just started the table
+      if (STATE.qrMode && URL_TABLE && !document.getElementById('sc-locked').classList.contains('hide')) {
+        const tOrd = STATE.tOrdersCache[URL_TABLE];
+        if (tOrd && tOrd.qrOrder === true) { STATE.table = URL_TABLE; goToMenu(); }
+      }
+      // If we're browsing the table picker (fallback mode), refresh occupancy
+      if (!document.getElementById('sc-table').classList.contains('hide')) buildTableGrid(STATE.tableSection);
+    })
+    .subscribe();
+}
+
+function showLocked() { goScreen('sc-locked'); }
+
+// ══════════════════════════════════════════════════════════
+// FALLBACK KIOSK FLOW (no table link — e.g. a counter/takeaway stand)
+// ══════════════════════════════════════════════════════════
+function chooseType(t) {
+  STATE.orderType = t;
+  STATE.table = null;
+  if (t === 'takeaway') {
+    STATE.table = 'TA-' + String(Date.now()).slice(-4);
+    goToMenu();
+  } else {
+    buildTableGrid('restaurant');
+    goScreen('sc-table');
+  }
+}
+
+function showTSection(sec, btn) {
+  STATE.tableSection = sec; STATE.table = null;
+  document.querySelectorAll('.ts-tab').forEach(b => b.classList.remove('on')); btn.classList.add('on');
+  const nx = document.getElementById('ts-next'); if (nx) { nx.disabled = true; nx.textContent = 'Select a table to continue →'; }
+  buildTableGrid(sec);
+}
+
+function buildTableGrid(sec) {
+  const g = document.getElementById('ts-grid'); if (!g) return;
+  const orders = STATE.tOrdersCache || {};
+  const count = sec === 'restaurant' ? TABLE_COUNT : BAR_SEATS;
+  const prefix = sec === 'restaurant' ? 'T' : 'B';
+  g.innerHTML = Array.from({ length: count }, (_, i) => {
+    const k = prefix + (i + 1); const occ = orders[k]?.items?.length > 0;
+    return `<div class="ts-cell${occ ? ' occ' : ''}${STATE.table === k ? ' sel' : ''}" onclick="pickTable('${k}')">
+      <div class="ts-num">${i + 1}</div>
+      <div class="ts-lbl">${occ ? 'Busy' : 'Free'}</div>
+    </div>`;
+  }).join('');
+}
+
+function pickTable(k) {
+  STATE.table = k;
+  document.querySelectorAll('.ts-cell').forEach(c => c.classList.remove('sel'));
+  event.currentTarget.classList.add('sel');
+  const nx = document.getElementById('ts-next');
+  if (nx) { nx.disabled = false; nx.textContent = 'Continue with ' + (k.startsWith('B') ? 'Bar ' + k.slice(1) : 'Table ' + k.slice(1)) + ' →'; }
+}
+
+function afterConfirm() {
+  // QR table link: stay on the same table, ready for another round
+  // Fallback kiosk: back to the welcome screen for the next customer
+  if (STATE.qrMode) { goToMenu(); } else { goScreen('sc-welcome'); }
+}
+
+// ══════════════════════════════════════════════════════════
+// MENU / CART
+// ══════════════════════════════════════════════════════════
+function goToMenu() {
+  if (!STATE.table) return;
+  STATE.cart = []; STATE.cat = 'All';
+  const badge = document.getElementById('so-tbadge');
+  const ttype = document.getElementById('so-ttype');
+  if (badge) {
+    if (STATE.orderType === 'takeaway') badge.textContent = '🥡 Takeaway #' + STATE.table.split('-')[1];
+    else badge.textContent = STATE.table.startsWith('B') ? 'Bar ' + STATE.table.slice(1) : 'Table ' + STATE.table.slice(1);
+  }
+  if (ttype) {
+    ttype.textContent = STATE.orderType === 'takeaway' ? '🥡 Takeaway' : '🍽 Eat In';
+    ttype.className = 'so-ttype ' + (STATE.orderType === 'takeaway' ? 'ta' : 'eat');
+  }
+  renderCatBar(); renderItems(); renderCart();
+  goScreen('sc-app');
+}
+
+function renderCatBar() {
+  const cats = ['All', ...new Set(MENU.map(m => m.category))];
+  const b = document.getElementById('so-catbar'); if (!b) return;
+  b.innerHTML = cats.map(c => `<button class="so-catbtn${c === STATE.cat ? ' on' : ''}" onclick="STATE.cat='${c}';renderCatBar();renderItems()">${c}</button>`).join('');
+}
+
+function renderItems() {
+  const g = document.getElementById('so-items'); if (!g) return;
+  let items = MENU;
+  if (STATE.cat !== 'All') items = items.filter(m => m.category === STATE.cat);
+  g.innerHTML = items.map(m => {
+    const inCart = STATE.cart.find(c => c.id === m.id);
+    return `<div class="so-item${inCart ? ' in-cart' : ''}" onclick="addToCart('${m.id}')">
+      <span class="so-item-dest ${m.dest === 'bar' ? 'dest-bar' : 'dest-kit'}">${m.dest === 'bar' ? '🍺' : '🍳'}</span>
+      <span class="so-emoj">${m.emoji}</span>
+      <div class="so-iname">${esc(m.name)}</div>
+      <div class="so-icat">${m.category}</div>
+      <div class="so-iprice">${fmt(m.price)}</div>
+      ${inCart ? `<div class="so-qty-row">
+        <div class="so-qb" onclick="event.stopPropagation();changeQty('${m.id}',-1)">−</div>
+        <div class="so-qn">${inCart.qty}</div>
+        <div class="so-qb" onclick="event.stopPropagation();changeQty('${m.id}',1)">+</div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function addToCart(id) {
+  const m = MENU.find(x => x.id === id); if (!m) return;
+  const ex = STATE.cart.find(c => c.id === id && !c.note);
+  if (ex) ex.qty++;
+  else STATE.cart.push({ id, name: m.name, price: m.price, qty: 1, dest: m.dest, emoji: m.emoji, note: '' });
+  renderItems(); renderCart();
+}
+
+function changeQty(idx, d) {
+  if(!STATE.cart[idx])return;
+  STATE.cart[idx].qty += d;
+  if (STATE.cart[idx].qty <= 0) STATE.cart.splice(idx,1);
+  renderItems(); renderCart();
+}
+
+function removeCartItem(idx) { STATE.cart.splice(idx,1); renderItems(); renderCart(); }
+
+function addItemNote(idx){
+  const ci=STATE.cart[idx];if(!ci)return;
+  // Show note modal
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:380px">
+    <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">📝 Note for ${esc(ci.emoji)} ${esc(ci.name)}</div>
+    <div style="font-size:0.75rem;color:var(--text2);margin-bottom:10px">Any special requests, allergies or customisations?</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
+      ${['No onion','No garlic','Extra sauce','No sauce','Gluten free','Dairy free','Nut allergy','Well done','Medium rare','No ice','No salt','Extra spicy','Mild'].map(q=>`<button onclick="appendSONote('${q}')" style="padding:4px 9px;border-radius:12px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:0.7rem;cursor:pointer">${q}</button>`).join('')}
+    </div>
+    <textarea id="so-note-txt" rows="3" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:9px;color:var(--text);font-size:0.85rem;outline:none;resize:none;font-family:inherit">${esc(ci.note||'')}</textarea>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-size:0.85rem">Cancel</button>
+      <button onclick="saveSONote(${idx},this)" style="flex:2;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:0.85rem;font-weight:700">✓ Save Note</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  window._soNoteOverlay=overlay;
+  window.appendSONote=function(t){const ta=document.getElementById('so-note-txt');if(ta)ta.value=(ta.value?(ta.value+', '):'')+t;};
+  window.saveSONote=function(i,btn){
+    const ta=document.getElementById('so-note-txt');
+    if(STATE.cart[i])STATE.cart[i].note=(ta?.value||'').trim();
+    btn.closest('[style*=fixed]').remove();
+    renderCart();
+  };
+}
+
+function calcTotals() {
+  const net = STATE.cart.reduce((s, c) => s + c.price * c.qty, 0);
+  const vat = net * VAT_R;
+  const svc = SVC_EN ? net * SVC_R : 0;
+  return { net, vat, svc, grand: net + vat + svc };
+}
+
+function renderCart() {
+  const el = document.getElementById('so-cart-items'); if (!el) return;
+  const cnt = document.getElementById('so-cart-count');
+  if (!STATE.cart.length) {
+    el.innerHTML = '<div class="so-empty-cart">Browse the menu and add items</div>';
+    if (cnt) cnt.textContent = 'Nothing added yet';
+  } else {
+    el.innerHTML = STATE.cart.map((ci, idx) => `<div class="so-ci" style="flex-direction:column;align-items:stretch;gap:4px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="so-qb" onclick="changeQty(${idx},-1)">−</div>
+        <div style="min-width:22px;text-align:center;font-family:'JetBrains Mono';font-size:0.85rem;font-weight:700">${ci.qty}</div>
+        <div class="so-qb" onclick="changeQty(${idx},1)">+</div>
+        <div class="so-ci-info">
+          <div class="so-ci-name">${ci.emoji} ${esc(ci.name)}</div>
+          <div class="so-ci-price">${fmt(ci.price * ci.qty)}</div>
+        </div>
+        <button onclick="addItemNote(${idx})" style="font-size:0.6rem;padding:2px 7px;border-radius:6px;border:1px solid var(--border);background:${ci.note?'rgba(255,215,0,0.15)':'var(--card)'};color:${ci.note?'#ffd700':'var(--text2)'};cursor:pointer;white-space:nowrap">📝 Note</button>
+        <div class="so-ci-rm" onclick="removeCartItem(${idx})">✕</div>
+      </div>
+      ${ci.note?`<div style="font-size:0.66rem;color:#ffd700;background:rgba(255,215,0,0.08);border-left:2px solid #ffd700;padding:3px 8px;border-radius:0 5px 5px 0;margin-left:8px">📝 ${esc(ci.note)}</div>`:''}
+    </div>`).join('');
+    const items = STATE.cart.reduce((s, c) => s + c.qty, 0);
+    if (cnt) cnt.textContent = items + ' item' + (items === 1 ? '' : 's');
+  }
+  setCartTots();
+}
+
+function setCartTots() {
+  const t = calcTotals();
+  const s = document.getElementById('so-sub'); if (s) s.textContent = fmt(t.net);
+  const v = document.getElementById('so-vat'); if (v) v.textContent = fmt(t.vat);
+  const sv = document.getElementById('so-svc'); if (sv) sv.textContent = fmt(t.svc);
+  const g = document.getElementById('so-grand'); if (g) g.textContent = fmt(t.grand);
+  const btn = document.getElementById('so-place-btn'); if (btn) btn.disabled = !STATE.cart.length;
+}
+
+// ══════════════════════════════════════════════════════════
+// PAYMENT
+// ══════════════════════════════════════════════════════════
+function goToPayment() {
+  if (!STATE.cart.length) return;
+  const t = calcTotals();
+  const e = document.getElementById('pay-total'); if (e) e.textContent = fmt(t.grand);
+  goScreen('sc-payment');
+}
+
+function selectPayMethod(method) {
+  STATE.payMethod = method;
+  if (method === 'till') placeOrder('till'); else startCardPayment();
+}
+
+function startCardPayment() {
+  const term = cfg.terminal || {};
+  const names = { manual: 'Card Machine', sumup: 'SumUp', square: 'Square', stripe: 'Stripe Terminal', worldpay: 'Worldpay', zettle: 'Zettle', paymentsense: 'Paymentsense' };
+  const termName = names[term.type] || (term.code ? term.code : 'Card Machine');
+  const t = calcTotals();
+  const amtEl = document.getElementById('card-amt'); if (amtEl) amtEl.textContent = fmt(t.grand);
+  const termEl = document.getElementById('card-term'); if (termEl) termEl.textContent = termName;
+  const statusEl = document.getElementById('card-status');
+  const subEl = document.getElementById('card-sub');
+  const icEl = document.getElementById('card-ic');
+  const cancelBtn = document.getElementById('card-cancel');
+  if (cancelBtn) cancelBtn.style.display = 'inline-block';
+  if (statusEl) statusEl.textContent = 'CONNECTING…';
+  if (subEl) subEl.textContent = 'Please wait while we connect to the card machine';
+  if (icEl) icEl.textContent = '💳';
+  goScreen('sc-card');
+  clearTimeout(_cardT1); clearTimeout(_cardT2); clearTimeout(_cardT3);
+  _cardT1 = setTimeout(() => {
+    if (statusEl) statusEl.textContent = 'TAP / INSERT / SWIPE';
+    if (subEl) subEl.textContent = 'Present your card to the reader';
+    _cardT2 = setTimeout(() => {
+      if (statusEl) statusEl.textContent = 'PROCESSING…';
+      if (subEl) subEl.textContent = 'Do not remove your card';
+      if (icEl) icEl.textContent = '⏳';
+      if (cancelBtn) cancelBtn.style.display = 'none';
+      _cardT3 = setTimeout(() => {
+        if (statusEl) statusEl.textContent = 'APPROVED ✅';
+        if (subEl) subEl.textContent = 'Payment successful';
+        if (icEl) icEl.textContent = '✅';
+        setTimeout(() => placeOrder('card'), 650);
+      }, 1400);
+    }, 1600);
+  }, 1000);
+}
+
+function cancelCardPayment() {
+  clearTimeout(_cardT1); clearTimeout(_cardT2); clearTimeout(_cardT3);
+  goScreen('sc-payment');
+}
+
+function printKioskReceipt(items, totals, tk, method) {
+  const p = cfg.printer || {};
+  if (!p.rtype || p.rtype === 'none') return;
+  const w = window.open('', '_blank', 'width=380,height=640');
+  if (!w) return;
+  const rows = items.map(i => `<div style="display:flex;justify-content:space-between"><span>${i.qty} x ${esc(i.name)}</span><span>${fmt(i.price * i.qty)}</span></div>`).join('');
+  const loc = tk.startsWith('B') ? 'Bar ' + tk.slice(1) : tk.startsWith('TA') ? 'Takeaway #' + tk.split('-')[1] : 'Table ' + tk.slice(1);
+  w.document.write(`<html><head><style>body{font-family:monospace;font-size:13px;margin:10px}hr{border:1px dashed #000}.center{text-align:center}.big{font-size:18px;font-weight:bold}.row{display:flex;justify-content:space-between}</style></head><body>
+    <div class="center big">${esc(cfg.venueName || 'CBSystem')}</div>
+    <div class="center">${esc(cfg.venueAddr || '')}</div>
+    <div class="center">${esc(cfg.venueTel || '')}</div>
+    <hr>
+    <div class="center">${esc(loc)} · QR Order</div>
+    <div class="center">${new Date().toLocaleString('en-GB')}</div>
+    <hr>
+    ${rows}
+    <hr>
+    <div class="row"><span>Subtotal</span><span>${fmt(totals.net)}</span></div>
+    <div class="row"><span>VAT</span><span>${fmt(totals.vat)}</span></div>
+    ${SVC_EN ? `<div class="row"><span>Service</span><span>${fmt(totals.svc)}</span></div>` : ''}
+    <div class="row big"><span>Total</span><span>${fmt(totals.grand)}</span></div>
+    <hr>
+    <div class="center">${method === 'card' ? 'PAID BY CARD' : 'PLEASE PAY AT TILL'}</div>
+    <hr>
+    <div class="center">${esc(cfg.receiptFooter || 'Thank you!')}</div>
+    <hr>
+    <script>window.print();setTimeout(()=>window.close(),2000);<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+// ══════════════════════════════════════════════════════════
+// PLACE ORDER — reads the latest cloud state, merges this order in, writes it back.
+// NOTE: this is a read-merge-write, not an atomic transaction — on a very busy venue,
+// two orders landing in the same split-second could in theory overwrite one another.
+// Fine for typical single-venue traffic; ask if you want this hardened with a
+// Postgres RPC for true atomic writes.
+// ══════════════════════════════════════════════════════════
+async function placeOrder(method) {
+  method = method === 'card' ? 'card' : 'till';
+  if (!STATE.cart.length) return;
+  const tk = STATE.table;
+  const totals = calcTotals();
+  const paid = method === 'card';
+  const placeBtn = document.getElementById('so-place-btn'); if (placeBtn) placeBtn.disabled = true;
+
+  let d;
+  try {
+    const { data, error } = await sb.from('cbs_state').select('data').eq('id', VENUE_CODE).maybeSingle();
+    if (error || !data || !data.data) throw error || new Error('no data');
+    d = data.data;
+  } catch (e) {
+    alert('Could not reach the kitchen — please check your connection and try again, or ask a member of staff.');
+    if (placeBtn) placeBtn.disabled = false;
+    return;
+  }
+
+  if (!d.tOrders) d.tOrders = {};
+  if (!d.kOrders) d.kOrders = [];
+  if (!d.bOrders) d.bOrders = [];
+  if (!d.txns) d.txns = [];
+  if (!d.tOrders[tk]) d.tOrders[tk] = { items: [], covers: 1, note: '', openedAt: Date.now(), qrOrder: true };
+  d.tOrders[tk].note = (d.tOrders[tk].note ? d.tOrders[tk].note + ' · ' : '') + (paid ? '💳 Paid by card (QR order, ' + fmt(totals.grand) + ')' : '🧾 Pay at till (QR order)');
+  const items = STATE.cart.map(c => ({ ...c, sent: false, by: STATE.qrMode ? 'QR Order' : 'Self Order', paid, payMethod: method }));
+  d.tOrders[tk].items.push(...items);
+
+  const kItems = items.filter(i => i.dest === 'kitchen');
+  if (kItems.length) {
+    d.kOrders.push({ id: 'QR' + Date.now(), table: tk, items: kItems, status: 'new', time: Date.now(), staff: STATE.qrMode ? 'QR Order' : 'Self Order', covers: d.tOrders[tk].covers || 1, note: STATE.orderType === 'takeaway' ? '🥡 TAKEAWAY' : '', orderType: STATE.orderType });
+    kItems.forEach(i => { const x = d.tOrders[tk].items.find(x => x.id === i.id && !x.sent); if (x) x.sent = true; });
+  }
+  const bItems = items.filter(i => i.dest === 'bar');
+  if (bItems.length) {
+    d.bOrders.push({ id: 'QR' + Date.now() + 'B', table: tk, items: bItems, status: 'new', time: Date.now(), staff: STATE.qrMode ? 'QR Order' : 'Self Order', orderType: STATE.orderType });
+    bItems.forEach(i => { const x = d.tOrders[tk].items.find(x => x.id === i.id && !x.sent); if (x) x.sent = true; });
+  }
+  if (paid) {
+    d.txns.push({ id: 'QRTX' + Date.now(), table: tk, amount: totals.grand, method: 'card', items: JSON.parse(JSON.stringify(items)), staff: STATE.qrMode ? 'QR Order' : 'Self Order', time: Date.now(), covers: d.tOrders[tk].covers || 1, discPct: 0, orderType: STATE.orderType, source: 'qr-order' });
+  }
+
+  try {
+    const { error: upErr } = await sb.from('cbs_state').upsert({ id: VENUE_CODE, data: d, updated_at: new Date().toISOString() });
+    if (upErr) throw upErr;
+  } catch (e) {
+    alert('Could not send your order — please try again, or ask a member of staff.');
+    if (placeBtn) placeBtn.disabled = false;
+    return;
+  }
+
+  applyRemoteData(d);
+  printKioskReceipt(items, totals, tk, method);
+
+  const ref = '#' + String(Date.now()).slice(-5);
+  const el = id => document.getElementById(id);
+  if (el('conf-ref')) el('conf-ref').textContent = ref;
+  if (el('conf-msg')) {
+    let msg;
+    if (STATE.orderType === 'takeaway') msg = 'Your takeaway order has been placed! We will call your number when ready. Reference: ' + ref;
+    else msg = 'Your order has been sent to the kitchen & bar. Your server will bring everything to ' + (tk.startsWith('B') ? 'Bar ' + tk.slice(1) : 'Table ' + tk.slice(1)) + '.';
+    msg += paid ? ' Payment received — thank you! 💳' : ' Please pay at the till when convenient. 🧾';
+    el('conf-msg').textContent = msg;
+  }
+  goScreen('sc-confirm');
+}
+
+// keyboard/back safety — nothing destructive on Escape here, this is a public customer page
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
