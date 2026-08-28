@@ -1363,42 +1363,76 @@ function waiterBack(){
 }
 
 let _wCat='All';
+
+function isHappyHour(){
+  const hh=DB.get('cfg').happyHour||{};
+  if(!hh.enabled)return false;
+  const now=new Date();
+  const day=now.getDay();
+  if(hh.days&&!hh.days.includes(day))return false;
+  const nowMins=now.getHours()*60+now.getMinutes();
+  const startMins=(hh.startH||16)*60+(hh.startM||0);
+  const endMins=(hh.endH||18)*60+(hh.endM||0);
+  return nowMins>=startMins&&nowMins<endMins;
+}
+
+function hhPrice(item){
+  if(!isHappyHour())return item.price;
+  const hh=DB.get('cfg').happyHour||{};
+  if(item.dest!=='bar'&&!item.happyHour)return item.price;
+  return+(item.price*(1-(hh.disc||50)/100)).toFixed(2);
+}
+
 function renderWaiterMenu(){
   const menu=DB.get('menu').filter(m=>m.available!==false);
   const cats=['All',...new Set(menu.map(m=>m.category))];
   const catEl=document.getElementById('wt-cats');
   if(catEl)catEl.innerHTML=cats.map(c=>`<button onclick="setWCat('${c}',this)" style="white-space:nowrap;padding:3px 10px;border-radius:10px;border:1px solid ${c===_wCat?'var(--accent)':'var(--border)'};background:${c===_wCat?'rgba(255,107,53,0.15)':'var(--card)'};color:${c===_wCat?'var(--accent)':'var(--text2)'};font-size:0.68rem;cursor:pointer;flex-shrink:0">${c}</button>`).join('');
-  wFilterMenu(document.getElementById('wt-search')?.value||'');
+  _renderWMenu(menu,'');
 }
 function setWCat(c,btn){
   _wCat=c;
-  document.getElementById('wt-cats').querySelectorAll('button').forEach(b=>{
-    const active=b.textContent===c;
+  const catEl=document.getElementById('wt-cats');
+  if(catEl)catEl.querySelectorAll('button').forEach(b=>{
+    const active=b.textContent.trim()===c;
     b.style.borderColor=active?'var(--accent)':'var(--border)';
     b.style.background=active?'rgba(255,107,53,0.15)':'var(--card)';
     b.style.color=active?'var(--accent)':'var(--text2)';
   });
-  wFilterMenu(document.getElementById('wt-search')?.value||'');
+  const q=document.getElementById('wt-search')?.value||'';
+  const menu=DB.get('menu').filter(m=>m.available!==false);
+  _renderWMenu(menu,q);
 }
 function wFilterMenu(q){
   const menu=DB.get('menu').filter(m=>m.available!==false);
+  _renderWMenu(menu,q||'');
+}
+function _renderWMenu(menu,q){
+  const g=document.getElementById('wt-menu');
+  if(!g){console.warn('wt-menu not found');return;}
+  const hh=isHappyHour();
   const filtered=menu.filter(m=>{
     const matchCat=_wCat==='All'||m.category===_wCat;
-    const matchQ=!q||m.name.toLowerCase().includes(q.toLowerCase());
+    const matchQ=!q||m.name.toLowerCase().includes(q.toLowerCase())||m.category.toLowerCase().includes(q.toLowerCase());
     return matchCat&&matchQ;
   });
-  const hh=isHappyHour();
-  const g=document.getElementById('wt-menu');if(!g)return;
-  g.innerHTML=filtered.map(m=>{
+  if(!filtered.length){g.innerHTML='<div style="color:var(--text2);font-size:0.78rem;padding:12px">No items found</div>';return;}
+  g.style.display='grid';
+  g.style.gridTemplateColumns='repeat(auto-fill,minmax(110px,1fr))';
+  g.style.gap='7px';
+  g.style.alignContent='start';
+  let html='';
+  filtered.forEach(m=>{
     const price=hhPrice(m);
     const discounted=hh&&(m.dest==='bar'||m.happyHour);
-    return`<div onclick="wAddItem('${m.id}')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 8px;cursor:pointer;text-align:center;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-      ${m.img?`<img src="${m.img}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;margin-bottom:4px">`:`<div style="font-size:1.6rem">${m.emoji}</div>`}
-      <div style="font-size:0.72rem;font-weight:600;color:var(--text);margin-top:2px">${esc(m.name)}</div>
-      <div style="font-size:0.78rem;font-weight:700;color:var(--accent)">${fmt(price)}${discounted?'<span style="font-size:0.52rem;color:var(--gold);margin-left:3px">HH</span>':''}</div>
-      ${(m.allergens&&m.allergens.length)?`<div style="font-size:0.5rem;color:var(--accent)">${m.allergens.slice(0,2).join(', ')}${m.allergens.length>2?'…':''}</div>`:''}
+    html+=`<div onclick="wAddItem('${m.id}')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 8px;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent">
+      ${m.img?`<img src="${m.img}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;margin-bottom:4px">`:`<div style="font-size:1.5rem">${m.emoji}</div>`}
+      <div style="font-size:0.7rem;font-weight:600;color:var(--text);margin-top:2px;word-break:break-word">${esc(m.name)}</div>
+      <div style="font-size:0.76rem;font-weight:700;color:var(--accent)">${fmt(price)}${discounted?'<span style="font-size:0.5rem;color:var(--gold);margin-left:2px">HH</span>':''}</div>
+      ${(m.allergens&&m.allergens.length)?`<div style="font-size:0.48rem;color:var(--accent);margin-top:1px">${m.allergens.slice(0,2).join(', ')}${m.allergens.length>2?'…':''}</div>`:''}
     </div>`;
-  }).join('');
+  });
+  g.innerHTML=html;
 }
 function wAddItem(id){
   if(!S.selTable)return;
