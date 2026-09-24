@@ -30,6 +30,7 @@ window.addEventListener('load',function(){
 </script>
 <!-- QR code generator (used by Settings → QR Table Ordering) -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 :root{
@@ -2673,19 +2674,47 @@ function genTableQRs(section){
   const label=section==='restaurant'?'Table':'Bar';
   const grid=document.getElementById('qr-grid');if(!grid)return;
   grid.innerHTML='';
+
   for(let i=1;i<=count;i++){
     const key=prefix+i;
     const sep=base.includes('?')?'&':'?';
     const url=base+sep+'t='+key;
     const cell=document.createElement('div');
-    cell.style.cssText='background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center';
-    cell.innerHTML='<div style="font-size:0.7rem;font-weight:700;margin-bottom:6px">'+label+' '+i+'</div><canvas id="qrc-'+key+'" width="120" height="120" style="width:100%;height:auto;border-radius:6px;background:#fff"></canvas><div style="font-size:0.55rem;color:var(--text2);margin-top:4px;word-break:break-all">'+esc(url)+'</div>';
+    cell.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center';
+
+    // Use Google Charts QR API as primary — reliable, no JS library needed
+    const qrImgUrl='https://chart.googleapis.com/chart?cht=qr&chs=160x160&chl='+encodeURIComponent(url)+'&choe=UTF-8&chld=M|1';
+    cell.innerHTML=
+      '<div style="font-size:0.7rem;font-weight:700;margin-bottom:6px;color:var(--text)">'+label+' '+i+'</div>'+
+      '<div id="qrc-wrap-'+key+'" style="background:#fff;border-radius:6px;padding:4px;display:inline-block">'+
+        '<img src="'+qrImgUrl+'" width="120" height="120" alt="QR '+key+'" '+
+          'style="display:block;border-radius:4px" '+
+          'onerror="this.parentNode.innerHTML=\'<canvas id=\\\"qrc-'+key+'\\\" width=\\\"120\\\" height=\\\"120\\\"></canvas>\';_tryCanvasQR(\\\"'+key+'\\\",\\\"'+encodeURIComponent(url)+'\\\")">'+
+      '</div>'+
+      '<div style="font-size:0.5rem;color:var(--text2);margin-top:5px;word-break:break-all;max-width:110px;margin-left:auto;margin-right:auto">'+esc(url)+'</div>';
     grid.appendChild(cell);
-    if(window.QRCode){
-      QRCode.toCanvas(document.getElementById('qrc-'+key),url,{width:120,margin:1,color:{dark:'#000000',light:'#ffffff'}},()=>{});
-    }
   }
   toast('Generated '+count+' QR codes for '+label+' 1–'+count,'📱','t-g');
+}
+
+// Canvas fallback if Google Charts blocked
+function _tryCanvasQR(key,encodedUrl){
+  const url=decodeURIComponent(encodedUrl);
+  const canvas=document.getElementById('qrc-'+key);
+  if(!canvas)return;
+  // Try qrcode npm library (toCanvas API)
+  if(window.QRCode&&typeof QRCode.toCanvas==='function'){
+    QRCode.toCanvas(canvas,url,{width:120,margin:1,color:{dark:'#000',light:'#fff'}},function(){});
+    return;
+  }
+  // Try qrcodejs library (constructor API)
+  if(window.QRCode&&typeof QRCode==='function'){
+    try{new QRCode(canvas,{text:url,width:120,height:120,colorDark:'#000',colorLight:'#fff'});}catch(e){}
+    return;
+  }
+  // Last resort: show URL text
+  const ctx=canvas.getContext('2d');
+  if(ctx){ctx.fillStyle='#fff';ctx.fillRect(0,0,120,120);ctx.fillStyle='#333';ctx.font='9px sans-serif';ctx.fillText('Scan URL:',5,20);ctx.font='7px sans-serif';const words=url.split('&');words.forEach((w,i)=>ctx.fillText(w.slice(0,22),5,35+i*11));}
 }
 
 function printQRPage(){
