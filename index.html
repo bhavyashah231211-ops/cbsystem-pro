@@ -367,7 +367,7 @@ body{
 .bk-i:focus,.bk-s:focus{border-color:var(--accent);}
 
 /* MODAL */
-.app-brand-tag{position:fixed;top:50%;right:calc(6px + var(--sar, 0px));transform:translateY(-50%);writing-mode:vertical-rl;font-family:'Bebas Neue',sans-serif;font-size:0.62rem;letter-spacing:3px;color:var(--border);pointer-events:none;z-index:50;text-transform:uppercase;}
+.app-brand-tag{position:fixed;bottom:calc(8px + var(--sab, 0px));right:calc(10px + var(--sar, 0px));font-family:'Bebas Neue',sans-serif;font-size:0.72rem;letter-spacing:3px;color:var(--accent);opacity:0.85;pointer-events:none;z-index:9998;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,0.5);}
 .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(5px);z-index:8000;display:none;align-items:flex-end;justify-content:center;padding:0;}
 .modal-ov.on{display:flex;}
 .modal{background:var(--card);border:1px solid var(--border);border-radius:17px 17px 0 0;padding:20px;max-width:520px;width:100%;max-height:88svh;overflow-y:auto;padding-bottom:max(20px,env(safe-area-inset-bottom,20px));}
@@ -457,6 +457,7 @@ body{
     <div class="t-right">
       <div class="t-clock" id="t-clock">--:--:--</div>
       <button id="drawer-btn" onclick="openCashDrawer()" title="Open Cash Drawer" style="display:none;padding:2px 9px;font-size:0.7rem;border-radius:7px;border:1px solid var(--green);background:rgba(45,212,160,0.1);color:var(--green);cursor:pointer;font-weight:700">💰 Drawer</button>
+      <button id="approval-btn" class="btn btn-o" style="display:none;position:relative;padding:2px 9px;font-size:0.62rem;border-color:var(--accent2);color:var(--accent2);font-weight:700" onclick="openApprovalsModal()" title="Pending self-order table requests">🔔 Requests<span id="approval-badge" style="display:none;position:absolute;top:-7px;right:-7px;background:var(--red);color:#fff;border-radius:8px;padding:0 5px;font-size:0.6rem;font-weight:700;line-height:1.5"></span></button>
       <button class="btn btn-o" style="padding:2px 9px;font-size:0.62rem;border-color:#22d3ee;color:#22d3ee" onclick="openCustomerDisplay()" title="Open Customer Display">🪟</button>
       <div class="t-sync" id="t-sync" title="Sync"></div>
       <div class="usr-btn" onclick="doLogout()">
@@ -561,6 +562,7 @@ const DB={
     if(!this.d.bkgs)this.d.bkgs=[];
     if(!this.d.voids)this.d.voids=[];
     if(!this.d.drawerLog)this.d.drawerLog=[];
+    if(!this.d.tableApprovals)this.d.tableApprovals={};
     if(!this.d.idc)this.d.idc=0;
   },
   save(){
@@ -915,6 +917,61 @@ function updBadges(){
   const bp=DB.get('bOrders').filter(o=>o.status==='new').length;
   ['kb','kb2'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display=kp?'':'none';el.textContent=kp;}});
   ['bkb','bkb2'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display=bp?'':'none';el.textContent=bp;}});
+
+  const pend=pendingApprovals();
+  const abtn=document.getElementById('approval-btn');
+  const abadge=document.getElementById('approval-badge');
+  if(abtn)abtn.style.display=pend.length?'':'none';
+  if(abadge){abadge.style.display=pend.length?'':'none';abadge.textContent=pend.length;}
+  pend.forEach(r=>{
+    const key=r.table+':'+r.requestedAt;
+    if(!_notifiedReq.has(key)){
+      _notifiedReq.add(key);
+      const loc=r.table.startsWith('B')?'Bar '+r.table.slice(1):'Table '+r.table.slice(1);
+      toast('📲 '+loc+' wants to start ordering — needs approval','🔔','t-b');
+    }
+  });
+}
+
+// ── SELF-ORDER TABLE APPROVALS ──
+const _notifiedReq=new Set();
+function pendingApprovals(){
+  const ta=DB.get('tableApprovals')||{};
+  return Object.keys(ta).filter(k=>ta[k].status==='pending').map(k=>Object.assign({table:k},ta[k]));
+}
+function openApprovalsModal(){
+  const list=pendingApprovals();
+  if(!list.length){
+    showModal('<div class="modal-t">🔔 Table Requests</div><div style="text-align:center;padding:24px 10px;color:var(--text2);font-size:0.78rem">No pending requests right now.</div><button class="btn btn-o" style="width:100%;margin-top:6px" onclick="closeModal()">Close</button>');
+    return;
+  }
+  showModal('<div class="modal-t">🔔 Table Requests</div>'
+    +'<div style="margin-bottom:10px;font-size:0.72rem;color:var(--text2)">A customer at the self-order kiosk wants to start ordering. Approve to let them see the menu.</div>'
+    +list.map(r=>{
+      const loc=r.table.startsWith('B')?'Bar '+r.table.slice(1):'Table '+r.table.slice(1);
+      const mins=Math.max(0,Math.round((Date.now()-r.requestedAt)/60000));
+      return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+        +'<div style="font-family:\'Bebas Neue\';font-size:1.3rem;letter-spacing:1px;color:var(--accent)">'+loc+'</div>'
+        +'<div style="font-size:0.65rem;color:var(--text2)">'+(mins<1?'just now':mins+'m ago')+'</div>'
+        +'</div>'
+        +'<div style="font-size:0.7rem;color:var(--text2);margin-bottom:10px">📲 Self-Order kiosk · '+(r.orderType==='takeaway'?'Takeaway':'Eat In')+'</div>'
+        +'<div style="display:flex;gap:8px">'
+        +'<button class="btn btn-g" style="flex:1;font-size:0.75rem" onclick="respondApproval(\''+r.table+'\',\'approved\')">✅ Approve</button>'
+        +'<button class="btn btn-r" style="flex:1;font-size:0.75rem" onclick="respondApproval(\''+r.table+'\',\'declined\')">❌ Decline</button>'
+        +'</div></div>';
+    }).join('')
+    +'<button class="btn btn-o" style="width:100%;margin-top:4px" onclick="closeModal()">Close</button>');
+}
+function respondApproval(table,status){
+  const ta=DB.get('tableApprovals')||{};
+  if(!ta[table])return;
+  ta[table].status=status;
+  ta[table].respondedAt=Date.now();
+  DB.set('tableApprovals',ta);
+  const loc=table.startsWith('B')?'Bar '+table.slice(1):'Table '+table.slice(1);
+  toast((status==='approved'?'✅ Approved — ':'❌ Declined — ')+loc,status==='approved'?'✅':'❌',status==='approved'?'t-g':'t-r');
+  if(pendingApprovals().length)openApprovalsModal();else closeModal();
 }
 
 // ═══════════════════════════════════════
@@ -3164,7 +3221,7 @@ body{display:flex;flex-direction:column;}
 .wl-sub{font-size:0.72rem;color:var(--border);letter-spacing:2px;text-transform:uppercase;margin-top:8px;}
 .wl-scroll{font-size:0.78rem;color:var(--text2);margin-top:26px;animation:fadeUpDown 2.5s ease-in-out infinite;}
 @keyframes fadeUpDown{0%,100%{transform:translateY(0);opacity:0.5}50%{transform:translateY(-6px);opacity:1}}
-.app-brand-tag{position:fixed;top:50%;right:calc(6px + var(--sar, 0px));transform:translateY(-50%);writing-mode:vertical-rl;font-family:'Bebas Neue',sans-serif;font-size:0.62rem;letter-spacing:3px;color:var(--border);pointer-events:none;z-index:50;text-transform:uppercase;}
+.app-brand-tag{position:fixed;bottom:calc(8px + var(--sab, 0px));right:calc(10px + var(--sar, 0px));font-family:'Bebas Neue',sans-serif;font-size:0.72rem;letter-spacing:3px;color:var(--accent);opacity:0.85;pointer-events:none;z-index:9998;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,0.5);}
 </style>
 </head>
 <body>
@@ -3504,7 +3561,7 @@ body{display:flex;flex-direction:column;}
 .card-amt{font-family:'JetBrains Mono';font-size:1.6rem;font-weight:700;color:var(--green);margin-top:10px;}
 .card-term{font-size:0.62rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-top:22px;}
 .card-cancel{margin-top:26px;padding:9px 26px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:0.75rem;cursor:pointer;color:var(--text2);font-family:'DM Sans';}
-.app-brand-tag{position:fixed;top:50%;right:calc(6px + var(--sar, 0px));transform:translateY(-50%);writing-mode:vertical-rl;font-family:'Bebas Neue',sans-serif;font-size:0.62rem;letter-spacing:3px;color:var(--border);pointer-events:none;z-index:50;text-transform:uppercase;}
+.app-brand-tag{position:fixed;bottom:calc(8px + var(--sab, 0px));right:calc(10px + var(--sar, 0px));font-family:'Bebas Neue',sans-serif;font-size:0.72rem;letter-spacing:3px;color:var(--accent);opacity:0.85;pointer-events:none;z-index:9998;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,0.5);}
 </style>
 </head>
 <body>
@@ -3539,7 +3596,15 @@ body{display:flex;flex-direction:column;}
     <button class="ts-tab" id="tst-b" onclick="showTSection('bar',this)">🍺 Bar</button>
   </div>
   <div class="ts-grid" id="ts-grid"></div>
-  <button class="ts-next" id="ts-next" onclick="goToMenu()" disabled>Select a table to continue →</button>
+  <button class="ts-next" id="ts-next" onclick="continueFromTable()" disabled>Select a table to continue →</button>
+</div>
+
+<!-- ── WAITING FOR STAFF APPROVAL ── -->
+<div class="screen hide" id="sc-waiting">
+  <div class="conf-ic" id="wait-ic">⏳</div>
+  <div class="conf-title" id="wait-title" style="color:var(--accent2)">Waiting for Staff…</div>
+  <div class="conf-msg" id="wait-msg">We're just confirming <strong id="wait-table-lbl">your table</strong> with our team. This usually only takes a moment.</div>
+  <button class="conf-again" id="wait-cancel-btn" style="background:var(--card);border:1px solid var(--border);color:var(--text2)" onclick="cancelApprovalRequest()">Cancel &amp; Choose Another Table</button>
 </div>
 
 <!-- ── MENU / ORDER APP ── -->
@@ -3679,6 +3744,58 @@ function pickTable(k){
   event.currentTarget.classList.add('sel');
   const nx=document.getElementById('ts-next');
   if(nx){nx.disabled=false;nx.textContent='Continue with '+( k.startsWith('B')?'Bar '+k.slice(1):'Table '+k.slice(1))+' →';}
+}
+
+// ── TABLE APPROVAL (Eat In only — a member of staff must approve before the menu opens) ──
+let _apprPoll=null,_apprStorageHandler=null;
+function continueFromTable(){
+  if(!STATE.table)return;
+  if(STATE.orderType==='takeaway'){goToMenu();return;}
+  requestTableApproval();
+}
+function requestTableApproval(){
+  let data;try{const s=localStorage.getItem('cbs2');data=s?JSON.parse(s):{};}catch(e){data={};}
+  if(!data.tableApprovals)data.tableApprovals={};
+  data.tableApprovals[STATE.table]={status:'pending',orderType:STATE.orderType,requestedAt:Date.now()};
+  try{localStorage.setItem('cbs2',JSON.stringify(data));}catch(e){}
+  const lbl=document.getElementById('wait-table-lbl');
+  if(lbl)lbl.textContent=STATE.table.startsWith('B')?'Bar '+STATE.table.slice(1):'Table '+STATE.table.slice(1);
+  const ic=document.getElementById('wait-ic');if(ic)ic.textContent='⏳';
+  const ti=document.getElementById('wait-title');if(ti){ti.textContent='Waiting for Staff…';ti.style.color='var(--accent2)';}
+  const msgEl=document.getElementById('wait-msg');if(msgEl)msgEl.innerHTML='We\\'re just confirming <strong id="wait-table-lbl">'+(lbl?lbl.textContent:'your table')+'</strong> with our team. This usually only takes a moment.';
+  const btn=document.getElementById('wait-cancel-btn');if(btn)btn.textContent='Cancel & Choose Another Table';
+  goScreen('sc-waiting');
+  startApprovalWatch();
+}
+function startApprovalWatch(){
+  stopApprovalWatch();
+  const check=()=>{
+    let data;try{const s=localStorage.getItem('cbs2');data=s?JSON.parse(s):{};}catch(e){data={};}
+    const rec=(data.tableApprovals||{})[STATE.table];
+    if(!rec)return;
+    if(rec.status==='approved'){stopApprovalWatch();goToMenu();}
+    else if(rec.status==='declined'){
+      stopApprovalWatch();
+      const ic=document.getElementById('wait-ic');if(ic)ic.textContent='⚠️';
+      const ti=document.getElementById('wait-title');if(ti){ti.textContent='Not Available Right Now';ti.style.color='var(--red)';}
+      const msgEl=document.getElementById('wait-msg');if(msgEl)msgEl.textContent='Sorry, a member of staff couldn\\'t confirm this table. Please choose another table or ask us for help.';
+      const btn=document.getElementById('wait-cancel-btn');if(btn)btn.textContent='Choose Another Table';
+      try{const s=localStorage.getItem('cbs2');const d2=s?JSON.parse(s):{};if(d2.tableApprovals)delete d2.tableApprovals[STATE.table];localStorage.setItem('cbs2',JSON.stringify(d2));}catch(e){}
+    }
+  };
+  _apprPoll=setInterval(check,1200);
+  _apprStorageHandler=e=>{if(e.key==='cbs2')check();};
+  window.addEventListener('storage',_apprStorageHandler);
+  check();
+}
+function stopApprovalWatch(){
+  if(_apprPoll){clearInterval(_apprPoll);_apprPoll=null;}
+  if(_apprStorageHandler){window.removeEventListener('storage',_apprStorageHandler);_apprStorageHandler=null;}
+}
+function cancelApprovalRequest(){
+  stopApprovalWatch();
+  try{const s=localStorage.getItem('cbs2');const d2=s?JSON.parse(s):{};if(d2.tableApprovals)delete d2.tableApprovals[STATE.table];localStorage.setItem('cbs2',JSON.stringify(d2));}catch(e){}
+  goScreen('sc-table');
 }
 
 function goToMenu(){
