@@ -367,6 +367,7 @@ body{
 .bk-i:focus,.bk-s:focus{border-color:var(--accent);}
 
 /* MODAL */
+.wm-overlay{position:fixed;inset:0;pointer-events:none;z-index:3000;opacity:0.045;background-repeat:repeat;background-size:230px 150px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='230' height='150'%3E%3Ctext x='0' y='85' font-family='DM Sans,sans-serif' font-size='22' font-weight='700' fill='white' transform='rotate(-24 115 75)'%3ECBSystem%3C/text%3E%3C/svg%3E");}
 .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(5px);z-index:8000;display:none;align-items:flex-end;justify-content:center;padding:0;}
 .modal-ov.on{display:flex;}
 .modal{background:var(--card);border:1px solid var(--border);border-radius:17px 17px 0 0;padding:20px;max-width:520px;width:100%;max-height:88svh;overflow-y:auto;padding-bottom:max(20px,env(safe-area-inset-bottom,20px));}
@@ -405,6 +406,7 @@ body{
 </style>
 </head>
 <body>
+<div class="wm-overlay"></div>
 
 <!-- STATION SELECT — boots here directly -->
 <div id="station-screen">
@@ -1296,6 +1298,7 @@ function openPay(){
       renderOP();renderTG();toast(fmt(parseFloat(amt))+' — '+pm.toUpperCase()+' — '+rcptNum+' ✓','✅','t-g');
       if(cfg2.terminal?.printReceipt)printTillReceipt(tx,cfg2);
       if(pm==='cash'&&cfg2.terminal?.cashDrawer)openCashDrawer();
+      showReceiptPopup(tx,cfg2);
     },900);
   };
 }
@@ -1317,12 +1320,8 @@ function barcodesvg(text,h){
   return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+h+'" viewBox="0 0 '+W+' '+h+'">'+rects+'</svg>';
 }
 
-// ── TILL RECEIPT PRINTER (with barcode) ──
-function printTillReceipt(tx,cfg){
-  var p=cfg.printer||{};
-  if(!p.rtype||p.rtype==='none')return;
-  var w=window.open('','_blank','width=380,height=720');
-  if(!w)return;
+// ── TILL RECEIPT — shared markup builder ──
+function receiptBody(tx,cfg){
   var items=tx.items||[];
   var disc=tx.discPct||0;
   var vr=(cfg.vatRate||20)/100;
@@ -1335,8 +1334,7 @@ function printTillReceipt(tx,cfg){
   var rows=items.map(function(i){return '<div class="row"><span>'+i.qty+'x '+i.name+'</span><span>'+cur+(i.price*i.qty).toFixed(2)+'</span></div>';}).join('');
   var bc=barcodesvg(tx.rcpt||tx.id,48);
   var isRefund=(tx.amount||0)<0;
-  w.document.write('<!DOCTYPE html><html><head><title>Receipt</title><style>body{font-family:monospace;font-size:12px;margin:8px;width:320px}hr{border:none;border-top:1px dashed #000;margin:5px 0}.center{text-align:center}.big{font-size:15px;font-weight:bold}.row{display:flex;justify-content:space-between;margin:2px 0}svg{display:block;margin:4px auto}</style></head><body>'
-    +'<div class="center big">'+(cfg.venueName||'CBSystem PRO')+'</div>'
+  return '<div class="center big">'+(cfg.venueName||'CBSystem PRO')+'</div>'
     +(cfg.venueAddr?'<div class="center">'+cfg.venueAddr+'</div>':'')
     +(cfg.venueTel?'<div class="center">Tel: '+cfg.venueTel+'</div>':'')
     +'<hr>'+(isRefund?'<div class="center big" style="color:#c00">*** REFUND ***</div><hr>':'')
@@ -1352,10 +1350,40 @@ function printTillReceipt(tx,cfg){
     +'<div class="center" style="font-size:10px;letter-spacing:2px">RECEIPT No.</div>'
     +'<div class="center big" style="font-size:13px;letter-spacing:3px">'+(tx.rcpt||tx.id)+'</div>'
     +bc
-    +'<hr><div class="center">'+(cfg.receiptFooter||'Thank you for visiting!')+'</div><hr>'
+    +'<hr><div class="center">'+(cfg.receiptFooter||'Thank you for visiting!')+'</div>';
+}
+
+// ── Opens the browser print dialog for a receipt — works regardless of printer settings ──
+function printReceiptWindow(tx,cfg){
+  var w=window.open('','_blank','width=380,height=720');
+  if(!w){toast('Allow pop-ups to print the receipt','⚠️','t-o');return;}
+  w.document.write('<!DOCTYPE html><html><head><title>Receipt</title><style>body{font-family:monospace;font-size:12px;margin:8px;width:320px}hr{border:none;border-top:1px dashed #000;margin:5px 0}.center{text-align:center}.big{font-size:15px;font-weight:bold}.row{display:flex;justify-content:space-between;margin:2px 0}svg{display:block;margin:4px auto}</style></head><body>'
+    +receiptBody(tx,cfg)
     +'<script>window.print();setTimeout(function(){window.close();},2500);<\/script>'
     +'</body></html>');
   w.document.close();
+}
+
+// ── Auto-print on the configured receipt printer (Settings → Printer) ──
+function printTillReceipt(tx,cfg){
+  var p=cfg.printer||{};
+  if(!p.rtype||p.rtype==='none')return;
+  printReceiptWindow(tx,cfg);
+}
+
+// ── On-screen receipt popup — always available after a payment/refund, with a manual Print option ──
+function showReceiptPopup(tx,cfg){
+  var isRefund=(tx.amount||0)<0;
+  window.printCurrentReceipt=function(){printReceiptWindow(tx,cfg);};
+  showModal('<div class="modal-t">'+(isRefund?'💸 Refund Receipt':'🧾 Receipt')+' — '+(tx.rcpt||tx.id)+'</div>'
+    +'<div style="background:#fff;color:#000;font-family:\'JetBrains Mono\',monospace;font-size:12px;padding:14px;border-radius:10px;max-height:56vh;overflow-y:auto;text-align:left">'
+    +'<style>.rv hr{border:none;border-top:1px dashed #000;margin:5px 0}.rv .center{text-align:center}.rv .big{font-size:15px;font-weight:bold}.rv .row{display:flex;justify-content:space-between;margin:2px 0}.rv svg{display:block;margin:4px auto}</style>'
+    +'<div class="rv">'+receiptBody(tx,cfg)+'</div>'
+    +'</div>'
+    +'<div style="display:flex;gap:7px;margin-top:10px">'
+    +'<button class="btn btn-o" style="flex:1" onclick="closeModal()">Close</button>'
+    +'<button class="btn btn-g" style="flex:2" onclick="printCurrentReceipt()">🖨️ Print Receipt</button>'
+    +'</div>');
 }
 
 // ── REFUND BY RECEIPT NUMBER ──
@@ -1415,6 +1443,7 @@ function processRefund(txId,type){
   toast('Refund '+fmt(amount)+' processed for '+(tx.rcpt||tx.id),'💸','t-g');
   var cfg=DB.get('cfg');
   if(cfg.terminal?.printReceipt)printTillReceipt(refTx,cfg);
+  showReceiptPopup(refTx,cfg);
 }
 
 // ── AUTO BACKUP (every 30 min + manual with folder picker) ──
@@ -3135,9 +3164,11 @@ body{display:flex;flex-direction:column;}
 .wl-sub{font-size:0.72rem;color:var(--border);letter-spacing:2px;text-transform:uppercase;margin-top:8px;}
 .wl-scroll{font-size:0.78rem;color:var(--text2);margin-top:26px;animation:fadeUpDown 2.5s ease-in-out infinite;}
 @keyframes fadeUpDown{0%,100%{transform:translateY(0);opacity:0.5}50%{transform:translateY(-6px);opacity:1}}
+.wm-overlay{position:fixed;inset:0;pointer-events:none;z-index:3000;opacity:0.045;background-repeat:repeat;background-size:230px 150px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='230' height='150'%3E%3Ctext x='0' y='85' font-family='DM Sans,sans-serif' font-size='22' font-weight='700' fill='white' transform='rotate(-24 115 75)'%3ECBSystem%3C/text%3E%3C/svg%3E");}
 </style>
 </head>
 <body>
+<div class="wm-overlay"></div>
 
 <!-- TOP BAR -->
 <div class="cd-top">
@@ -3473,9 +3504,11 @@ body{display:flex;flex-direction:column;}
 .card-amt{font-family:'JetBrains Mono';font-size:1.6rem;font-weight:700;color:var(--green);margin-top:10px;}
 .card-term{font-size:0.62rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-top:22px;}
 .card-cancel{margin-top:26px;padding:9px 26px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:0.75rem;cursor:pointer;color:var(--text2);font-family:'DM Sans';}
+.wm-overlay{position:fixed;inset:0;pointer-events:none;z-index:3000;opacity:0.045;background-repeat:repeat;background-size:230px 150px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='230' height='150'%3E%3Ctext x='0' y='85' font-family='DM Sans,sans-serif' font-size='22' font-weight='700' fill='white' transform='rotate(-24 115 75)'%3ECBSystem%3C/text%3E%3C/svg%3E");}
 </style>
 </head>
 <body>
+<div class="wm-overlay"></div>
 
 <!-- ── WELCOME SCREEN ── -->
 <div class="screen" id="sc-welcome">
