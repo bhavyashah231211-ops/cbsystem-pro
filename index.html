@@ -585,6 +585,22 @@ const DB={
     // Cloud sync (cross-device, real-time via Supabase)
     this.initCloud();
   },
+  // Never let a partial/empty cloud row wipe staff, menu or orders: restore any missing core data from this device
+  _safeRemote(r){
+    const loc=this.d||{};let healed=false;
+    const isArr=Array.isArray,isObj=o=>o&&typeof o==='object'&&!Array.isArray(o);
+    const need={staff:isArr,menu:isArr,tOrders:isObj,kOrders:isArr,bOrders:isArr,txns:isArr,bkgs:isArr,voids:isArr,drawerLog:isArr,tableApprovals:isObj};
+    Object.keys(need).forEach(k=>{
+      if(!need[k](r[k])){
+        healed=true;
+        if(need[k](loc[k]))r[k]=loc[k];
+        else r[k]=k==='staff'?JSON.parse(JSON.stringify(DSTAFF)):k==='menu'?JSON.parse(JSON.stringify(DMENU)):(need[k]===isArr?[]:{});
+      }
+    });
+    if(!r.idc)r.idc=loc.idc||0;
+    if(healed)setTimeout(()=>this._queuePush(),800);
+    return r;
+  },
   _client(){
     const c=this.d.cfg;
     if(!c.supabaseUrl||!c.supabaseKey||typeof window.supabase==='undefined')return null;
@@ -608,7 +624,7 @@ const DB={
       if(data&&data.data){
         this._applyingRemote=true;
         const localCfg=this.d.cfg;
-        this.d=data.data;
+        this.d=this._safeRemote(data.data);
         this.d.cfg=Object.assign({},localCfg,data.data.cfg||{},{cloudMode:true,supabaseUrl:localCfg.supabaseUrl,supabaseKey:localCfg.supabaseKey,venueCode:code});
         try{localStorage.setItem('cbs2',JSON.stringify(this.d));}catch(e){}
         this._cbs.forEach(fn=>{try{fn();}catch(e){}});
@@ -628,7 +644,7 @@ const DB={
             this._lastRemoteTime=remoteTime;
             this._applyingRemote=true;
             const localCfg=this.d.cfg;
-            this.d=data.data;
+            this.d=this._safeRemote(data.data);
             this.d.cfg=Object.assign({},localCfg,data.data.cfg||{},{cloudMode:true,supabaseUrl:localCfg.supabaseUrl,supabaseKey:localCfg.supabaseKey,venueCode:code});
             try{localStorage.setItem('cbs2',JSON.stringify(this.d));}catch(e){}
             this._cbs.forEach(fn=>{try{fn();}catch(e){}});
@@ -646,7 +662,7 @@ const DB={
           if(!remote)return;
           this._applyingRemote=true;
           const localCfg=this.d.cfg;
-          this.d=remote;
+          this.d=this._safeRemote(remote);
           this.d.cfg=Object.assign({},remote.cfg||{},{cloudMode:true,supabaseUrl:localCfg.supabaseUrl,supabaseKey:localCfg.supabaseKey,venueCode:code});
           try{localStorage.setItem('cbs2',JSON.stringify(this.d));}catch(e){}
           this._cbs.forEach(fn=>{try{fn();}catch(e){}});
@@ -3731,7 +3747,8 @@ async function cloudPatch(fn){
   const c=sbc();if(!c)return false;
   try{
     const r=await c.from('cbs_state').select('data').eq('id',CLOUD.code).maybeSingle();
-    const remote=(r.data&&r.data.data)?r.data.data:{};
+    if(r.error||!r.data||!r.data.data)return false; // never write over a row we could not read
+    const remote=r.data.data;
     fn(remote);
     const u=await c.from('cbs_state').upsert({id:CLOUD.code,data:remote,updated_at:new Date().toISOString()});
     if(u.error)throw u.error;
