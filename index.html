@@ -2786,6 +2786,7 @@ function renderSet(){
         <button class="btn btn-o" style="font-size:0.72rem" onclick="genTableQRs('restaurant')">🍽 Generate Table QRs</button>
         <button class="btn btn-o" style="font-size:0.72rem" onclick="genTableQRs('bar')">🍺 Generate Bar QRs</button>
         <button class="btn btn-g" style="font-size:0.72rem" onclick="printQRPage()">🖨 Print All</button>
+        <button class="btn btn-o" style="font-size:0.72rem;border-color:var(--blue);color:var(--blue)" onclick="downloadSelfOrderFile()">⬇ Download self-order.html</button>
       </div>
       <div id="qr-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;max-height:420px;overflow-y:auto;padding:4px"></div>
     </div>
@@ -3401,6 +3402,17 @@ window.addEventListener('storage',e=>{if(e.key==='cbs2'||e.key==='cbs_selected_t
 // ═══════════════════════════════════════
 let _selfWin=null;
 
+function downloadSelfOrderFile(){
+  const cfg=DB.get('cfg');
+  if(!cfg.cloudMode||!cfg.supabaseUrl||!cfg.supabaseKey||!cfg.venueCode){toast('Turn on Cloud Mode first (Settings → Sync)','⚠️','t-o');return;}
+  const html=buildSelfOrderHTML();
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download='self-order.html';
+  document.body.appendChild(a);a.click();a.remove();
+  toast('Downloaded — host it, then paste its URL above. Re-download after menu changes.','⬇','t-g');
+}
+
 function openSelfOrder(){
   const html=buildSelfOrderHTML();
   if(_selfWin&&!_selfWin.closed){_selfWin.document.open();_selfWin.document.write(html);_selfWin.document.close();_selfWin.focus();return;}
@@ -3422,13 +3434,21 @@ function buildSelfOrderHTML(){
   const svcEnabled=cfg.serviceCharge||false;
   const svcRate=cfg.serviceChargeRate||10;
   const menuJSON=JSON.stringify(menu).replace(/`/g,'\\`').replace(/<\//g,'<\\/');
+  // Cloud Mode — lets this kiosk (even on a separate device/phone) sync table approvals
+  // and orders with the till in real time via the same Supabase project.
+  const cloudOn=!!cfg.cloudMode;
+  const cloudUrl=cfg.cloudMode?(cfg.supabaseUrl||''):'';
+  const cloudKey=cfg.cloudMode?(cfg.supabaseKey||''):'';
+  const cloudCode=(cfg.venueCode||'default').trim()||'default';
+  const cloudScriptTag=cloudOn?'<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script><script>window.addEventListener("load",function(){if(typeof window.supabase==="undefined"){var s=document.createElement("script");s.src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js";document.head.appendChild(s);}});<\/script>':'';
 
   return`<!DOCTYPE html>
-<html lang="en">
+<html lang=\"en\">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta charset=\"UTF-8\">
+<meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no\">
 <title>${venueName} — Order Here</title>
+${cloudScriptTag}
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 :root{
@@ -3693,6 +3713,38 @@ const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 let STATE={orderType:'dineIn',table:null,tableSection:'restaurant',cart:[],cat:'All',payMethod:null};
 let _cardT1=null,_cardT2=null,_cardT3=null;
 
+// ── CLOUD MODE (Supabase) — same cbs_state row the till syncs with ──
+const CLOUD={on:${cloudOn},url:${JSON.stringify(cloudUrl)},key:${JSON.stringify(cloudKey)},code:${JSON.stringify(cloudCode)}};
+let _sb=null,_cloudCache=null;
+function sbc(){
+  if(!CLOUD.on||!CLOUD.url||!CLOUD.key||typeof window.supabase==='undefined')return null;
+  if(!_sb){try{_sb=window.supabase.createClient(CLOUD.url,CLOUD.key);}catch(e){_sb=null;}}
+  return _sb;
+}
+async function cloudGet(){
+  const c=sbc();if(!c)return null;
+  try{const r=await c.from('cbs_state').select('data').eq('id',CLOUD.code).maybeSingle();
+    if(r.error||!r.data||!r.data.data)return null;
+    _cloudCache=r.data.data;return _cloudCache;}catch(e){return null;}
+}
+async function cloudPatch(fn){
+  const c=sbc();if(!c)return false;
+  try{
+    const r=await c.from('cbs_state').select('data').eq('id',CLOUD.code).maybeSingle();
+    const remote=(r.data&&r.data.data)?r.data.data:{};
+    fn(remote);
+    const u=await c.from('cbs_state').upsert({id:CLOUD.code,data:remote,updated_at:new Date().toISOString()});
+    if(u.error)throw u.error;
+    _cloudCache=remote;return true;
+  }catch(e){return false;}
+}
+if(CLOUD.on){
+  setInterval(function(){cloudGet().then(function(){
+    const g=document.getElementById('ts-grid');
+    if(g&&g.children.length&&!document.getElementById('sc-table').classList.contains('hide'))buildTableGrid(STATE.tableSection);
+  });},3000);
+}
+
 // ── NAV ──
 function goScreen(id){
   document.querySelectorAll('.screen,.so-app').forEach(el=>{
@@ -3726,7 +3778,7 @@ function showTSection(sec,btn){
 function buildTableGrid(sec){
   const g=document.getElementById('ts-grid');if(!g)return;
   let data;try{const s=localStorage.getItem('cbs2');data=s?JSON.parse(s):{};}catch(e){data={};}
-  const orders=data.tOrders||{};
+  const orders=(CLOUD.on&&_cloudCache&&_cloudCache.tOrders)?_cloudCache.tOrders:(data.tOrders||{});
   const count=sec==='restaurant'?TABLE_COUNT:BAR_SEATS;
   const prefix=sec==='restaurant'?'T':'B';
   g.innerHTML=Array.from({length:count},(_,i)=>{
@@ -3758,6 +3810,8 @@ function requestTableApproval(){
   if(!data.tableApprovals)data.tableApprovals={};
   data.tableApprovals[STATE.table]={status:'pending',orderType:STATE.orderType,requestedAt:Date.now()};
   try{localStorage.setItem('cbs2',JSON.stringify(data));}catch(e){}
+  if(CLOUD.on){const tb=STATE.table,ot=STATE.orderType,rt=data.tableApprovals[STATE.table].requestedAt;
+    cloudPatch(function(r){if(!r.tableApprovals)r.tableApprovals={};r.tableApprovals[tb]={status:'pending',orderType:ot,requestedAt:rt};});}
   const lbl=document.getElementById('wait-table-lbl');
   if(lbl)lbl.textContent=STATE.table.startsWith('B')?'Bar '+STATE.table.slice(1):'Table '+STATE.table.slice(1);
   const ic=document.getElementById('wait-ic');if(ic)ic.textContent='⏳';
@@ -3773,7 +3827,7 @@ function startApprovalWatch(){
     let data;try{const s=localStorage.getItem('cbs2');data=s?JSON.parse(s):{};}catch(e){data={};}
     const rec=(data.tableApprovals||{})[STATE.table];
     if(!rec)return;
-    if(rec.status==='approved'){stopApprovalWatch();goToMenu();}
+    if(rec.status==='approved'){stopApprovalWatch();if(CLOUD.on){const tb=STATE.table;cloudPatch(function(r){if(r.tableApprovals)delete r.tableApprovals[tb];});}goToMenu();}
     else if(rec.status==='declined'){
       stopApprovalWatch();
       const ic=document.getElementById('wait-ic');if(ic)ic.textContent='⚠️';
@@ -3781,9 +3835,20 @@ function startApprovalWatch(){
       const msgEl=document.getElementById('wait-msg');if(msgEl)msgEl.textContent='Sorry, a member of staff couldn\\'t confirm this table. Please choose another table or ask us for help.';
       const btn=document.getElementById('wait-cancel-btn');if(btn)btn.textContent='Choose Another Table';
       try{const s=localStorage.getItem('cbs2');const d2=s?JSON.parse(s):{};if(d2.tableApprovals)delete d2.tableApprovals[STATE.table];localStorage.setItem('cbs2',JSON.stringify(d2));}catch(e){}
+      if(CLOUD.on){const tb=STATE.table;cloudPatch(function(r){if(r.tableApprovals)delete r.tableApprovals[tb];});}
     }
   };
-  _apprPoll=setInterval(check,1200);
+  let _cbusy=false;
+  const cloudCheck=async function(){
+    if(!CLOUD.on||_cbusy)return;_cbusy=true;
+    try{const d=await cloudGet();const rec=d&&d.tableApprovals&&d.tableApprovals[STATE.table];
+      if(rec&&(rec.status==='approved'||rec.status==='declined')){
+        try{const s=localStorage.getItem('cbs2');const d2=s?JSON.parse(s):{};if(!d2.tableApprovals)d2.tableApprovals={};d2.tableApprovals[STATE.table]=rec;localStorage.setItem('cbs2',JSON.stringify(d2));}catch(e){}
+        check();
+      }}catch(e){}
+    _cbusy=false;
+  };
+  _apprPoll=setInterval(function(){check();cloudCheck();},1200);
   _apprStorageHandler=e=>{if(e.key==='cbs2')check();};
   window.addEventListener('storage',_apprStorageHandler);
   check();
@@ -3794,6 +3859,7 @@ function stopApprovalWatch(){
 }
 function cancelApprovalRequest(){
   stopApprovalWatch();
+  if(CLOUD.on){const tb=STATE.table;cloudPatch(function(r){if(r.tableApprovals)delete r.tableApprovals[tb];});}
   try{const s=localStorage.getItem('cbs2');const d2=s?JSON.parse(s):{};if(d2.tableApprovals)delete d2.tableApprovals[STATE.table];localStorage.setItem('cbs2',JSON.stringify(d2));}catch(e){}
   goScreen('sc-table');
 }
@@ -3996,11 +4062,7 @@ function printKioskReceipt(cfg,items,totals,tk,method){
 }
 
 // ── PLACE ORDER ──
-function placeOrder(method){
-  method=method==='card'?'card':'till';
-  if(!STATE.cart.length)return;
-  let data;
-  try{const s=localStorage.getItem('cbs2');data=s?JSON.parse(s):{};}catch(e){data={};}
+function applyKioskOrder(data,method,now){
   if(!data.tOrders)data.tOrders={};
   if(!data.kOrders)data.kOrders=[];
   if(!data.bOrders)data.bOrders=[];
@@ -4010,7 +4072,7 @@ function placeOrder(method){
   const totals=calcTotals();
   const paid=method==='card';
   // Merge into tOrders
-  if(!data.tOrders[tk])data.tOrders[tk]={items:[],covers:1,note:'',openedAt:Date.now(),openedBy:'Self Order',orderType:STATE.orderType};
+  if(!data.tOrders[tk])data.tOrders[tk]={items:[],covers:1,note:'',openedAt:now,openedBy:'Self Order',orderType:STATE.orderType};
   data.tOrders[tk].orderType=STATE.orderType;
   data.tOrders[tk].note=(data.tOrders[tk].note?data.tOrders[tk].note+' · ':'')+(paid?'💳 Paid by card at kiosk ('+fmt(totals.grand)+')':'🧾 Pay at till');
   const items=STATE.cart.map(c=>({...c,sent:false,by:'Self Order',paid,payMethod:method}));
@@ -4019,27 +4081,40 @@ function placeOrder(method){
   // Send kitchen items
   const kItems=items.filter(i=>i.dest==='kitchen');
   if(kItems.length){
-    const ordId='SO'+Date.now();
-    data.kOrders.push({id:ordId,table:tk,items:kItems,status:'new',time:Date.now(),staff:'Self Order',covers:data.tOrders[tk].covers,note:STATE.orderType==='takeaway'?'🥡 TAKEAWAY':'',orderType:STATE.orderType});
+    const ordId='SO'+now;
+    data.kOrders.push({id:ordId,table:tk,items:kItems,status:'new',time:now,staff:'Self Order',covers:data.tOrders[tk].covers,note:STATE.orderType==='takeaway'?'🥡 TAKEAWAY':'',orderType:STATE.orderType});
     kItems.forEach(i=>{const x=data.tOrders[tk].items.find(x=>x.id===i.id&&!x.sent);if(x)x.sent=true;});
   }
   // Send bar items
   const bItems=items.filter(i=>i.dest==='bar');
   if(bItems.length){
-    const ordId2='SO'+Date.now()+'B';
-    data.bOrders.push({id:ordId2,table:tk,items:bItems,status:'new',time:Date.now(),staff:'Self Order',orderType:STATE.orderType});
+    const ordId2='SO'+now+'B';
+    data.bOrders.push({id:ordId2,table:tk,items:bItems,status:'new',time:now,staff:'Self Order',orderType:STATE.orderType});
     bItems.forEach(i=>{const x=data.tOrders[tk].items.find(x=>x.id===i.id&&!x.sent);if(x)x.sent=true;});
   }
 
   // Record a transaction if paid by card at the kiosk (feeds Till reports/reconciliation)
   if(paid){
-    data.txns.push({id:'SOTX'+Date.now(),table:tk,amount:totals.grand,method:'card',items:JSON.parse(JSON.stringify(items)),staff:'Self Order',time:Date.now(),covers:data.tOrders[tk].covers||1,discPct:0,orderType:STATE.orderType,source:'self-order-kiosk'});
+    data.txns.push({id:'SOTX'+now,table:tk,amount:totals.grand,method:'card',items:JSON.parse(JSON.stringify(items)),staff:'Self Order',time:now,covers:data.tOrders[tk].covers||1,discPct:0,orderType:STATE.orderType,source:'self-order-kiosk'});
   }
+  return items;
+}
 
+function placeOrder(method){
+  method=method==='card'?'card':'till';
+  if(!STATE.cart.length)return;
+  let data;
+  try{const s=localStorage.getItem('cbs2');data=s?JSON.parse(s):{};}catch(e){data={};}
+  const now=Date.now();
+  const tk=STATE.table;
+  const totals=calcTotals();
+  const paid=method==='card';
+  const items=applyKioskOrder(data,method,now);
   try{localStorage.setItem('cbs2',JSON.stringify(data));}catch(e){alert('Order save failed — please tell staff');}
+  if(CLOUD.on){const m2=method;cloudPatch(function(r){applyKioskOrder(r,m2,now);});}
 
   // Auto-print a receipt on the configured receipt printer (Settings → Printer Settings)
-  printKioskReceipt(data.cfg,items,totals,tk,method);
+  printKioskReceipt(data.cfg||(_cloudCache&&_cloudCache.cfg),items,totals,tk,method);
 
   // Show confirmation
   const ref='#'+String(Date.now()).slice(-5);
@@ -4056,6 +4131,17 @@ function placeOrder(method){
   }
   goScreen('sc-confirm');
 }
+
+// Opened from a table QR code (?t=T5 / B3): jump straight to the approval request
+(function(){
+  try{
+    const qt=new URLSearchParams(location.search).get('t');
+    if(qt&&/^[TB]\\d+$/.test(qt)){
+      STATE.orderType='dineIn';STATE.table=qt;
+      setTimeout(function(){requestTableApproval();},600);
+    }
+  }catch(e){}
+})();
 <\/script>
 </body>
 </html>`;
