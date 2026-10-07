@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>CBSystem</title>
+</head>
+<body style="background:#0a0a0f;color:#9090b0;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+<div id="m">Loading…</div>
+<script>
+/* Loads the POS from the top of this site (../index.html) and adds tenant.js
+   just before its closing body tag. Nothing to copy or edit by hand. */
+fetch('../index.html',{cache:'no-store'})
+  .then(function(r){if(!r.ok)throw new Error('missing');return r.text();})
+  .then(function(t){
+    var add='<script src="tenant.js"><\/script>';
+    var i=t.lastIndexOf('</body>');
+    t=i<0?t+add:t.slice(0,i)+add+t.slice(i);
+    document.open();
+    var fired=false;window.addEventListener('load',function(){fired=true;});
+    document.write(t);document.close();
+    /* Safety net: if the browser does not fire "load" for the rewritten page, fire it once */
+    var seenComplete=false,n=0,iv=setInterval(function(){
+      n++;
+      if(fired||n>40){clearInterval(iv);return;}
+      if(document.readyState==='complete'){
+        if(seenComplete){clearInterval(iv);window.dispatchEvent(new Event('load'));}
+        seenComplete=true;
+      }
+    },500);
+  })
+  .catch(function(){
+    document.getElementById('m').textContent='Could not load the POS. Check that index.html is in the top folder of the site.';
+  });
+</script>
+</body></html>
