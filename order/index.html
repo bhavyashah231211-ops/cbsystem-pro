@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Order Here</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="../config.js"></script>
+<style>
+:root{--bg:#07070d;--bg2:#0f0f18;--card:#181828;--card2:#1e1e30;--border:#252540;--accent:#ff6b35;--accent2:#ffa500;--green:#2dd4a0;--blue:#4a9eff;--red:#ff4560;--bar:#9b59b6;--text:#f0f0f8;--text2:#8888aa}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text)}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);padding:16px;text-align:center;overflow:auto}
+.hide{display:none!important}
+.logo{font-family:'Bebas Neue';font-size:4rem;color:var(--accent);letter-spacing:8px;line-height:1}
+.venue{font-size:.9rem;color:var(--text2);letter-spacing:3px;text-transform:uppercase;margin:4px 0 30px}
+.row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.tbtn{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 30px;cursor:pointer;min-width:150px;color:var(--text);font:inherit}
+.tbtn.eat{border-color:var(--blue)}.tbtn.ta{border-color:var(--accent2)}
+.tbtn .ic{font-size:2.8rem}.tbtn b{font-family:'Bebas Neue';font-size:1.5rem;letter-spacing:2px;font-weight:400}.tbtn small{font-size:.62rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+.ttl{font-family:'Bebas Neue';font-size:2rem;letter-spacing:3px;margin-bottom:4px}
+.sub{font-size:.74rem;color:var(--text2);margin-bottom:16px}
+.back{position:absolute;top:14px;left:14px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 14px;font-size:.78rem;cursor:pointer;color:var(--text2);font-family:inherit}
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tab{padding:7px 20px;border-radius:10px;font-size:.78rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text2);font-family:inherit}
+.tab.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px;width:min(92vw,420px);max-height:46vh;overflow-y:auto}
+.cell{height:56px;background:var(--card);border:2px solid var(--border);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font:inherit}
+.cell.occ{border-color:var(--accent);background:rgba(255,107,53,.08)}.cell.sel{border-color:var(--blue);box-shadow:0 0 0 3px rgba(74,158,255,.25)}
+.cell b{font-family:'Bebas Neue';font-size:1.4rem;line-height:1;font-weight:400}.cell small{font-size:.42rem;color:var(--text2);text-transform:uppercase}
+.big{margin-top:18px;padding:13px 40px;background:var(--blue);color:#fff;border:0;border-radius:13px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit}
+.big:disabled{opacity:.4}.big.alt{background:var(--card);border:1px solid var(--border);color:var(--text2)}
+.msg{font-size:.88rem;color:var(--text2);max-width:340px;line-height:1.6;margin-top:6px}
+.cti{font-family:'Bebas Neue';font-size:2.4rem;letter-spacing:3px}
+.ref{font-family:'JetBrains Mono';font-size:1.3rem;color:var(--accent);margin:10px 0}
+/* menu */
+.app{padding:0;align-items:stretch;justify-content:flex-start;text-align:left}
+.top{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;height:50px;gap:8px;flex-shrink:0;padding-top:env(safe-area-inset-top)}
+.top .lg{font-family:'Bebas Neue';font-size:1.3rem;color:var(--accent);letter-spacing:2px}
+.badge{font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:8px;background:rgba(74,158,255,.15);color:var(--blue)}
+.badge.ta{background:rgba(255,165,0,.12);color:var(--accent2)}
+.body{display:flex;flex:1;overflow:hidden;min-height:0}
+.menu{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.cats{display:flex;gap:5px;overflow-x:auto;padding:8px 10px;border-bottom:1px solid var(--border);flex-shrink:0;scrollbar-width:none}
+.cat{padding:5px 14px;border-radius:16px;font-size:.7rem;font-weight:600;cursor:pointer;border:0;background:var(--card);color:var(--text2);white-space:nowrap;flex-shrink:0;font-family:inherit}
+.cat.on{background:var(--accent);color:#fff}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;padding:10px;overflow-y:auto;flex:1;align-content:start}
+.it{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:11px 9px;cursor:pointer;position:relative}
+.it.in{border-color:var(--green);background:rgba(45,212,160,.05)}
+.it .d{position:absolute;top:5px;right:6px;font-size:.7rem}
+.it .em{font-size:1.9rem;display:block;margin-bottom:4px}.it img{width:100%;height:74px;object-fit:cover;border-radius:9px;margin-bottom:5px;display:block}
+.it .n{font-size:.77rem;font-weight:600}.it .c{font-size:.56rem;color:var(--text2);margin-bottom:3px}.it .p{font-size:.92rem;font-weight:700;color:var(--accent)}
+.qr{display:flex;align-items:center;gap:8px;margin-top:6px}
+.qb{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qn{font-family:'JetBrains Mono';font-size:.88rem;font-weight:700;min-width:18px;text-align:center}
+.cart{width:280px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column}
+.ch{padding:10px 14px;border-bottom:1px solid var(--border)}.ch b{font-family:'Bebas Neue';font-size:1.25rem;font-weight:400}.ch small{display:block;font-size:.62rem;color:var(--text2)}
+.ci{flex:1;overflow-y:auto;padding:4px 14px}
+.cl{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.75rem}
+.cl .i{flex:1}.cl .i b{display:block;font-weight:600}.cl .i span{color:var(--accent);font-size:.7rem}
+.cf{padding:10px 14px;border-top:1px solid var(--border);padding-bottom:max(10px,env(safe-area-inset-bottom))}
+.tr{display:flex;justify-content:space-between;font-size:.75rem;color:var(--text2);margin-bottom:3px}.tr.g{color:var(--text);font-weight:700;font-size:1rem;margin-top:5px;padding-top:5px;border-top:1px solid var(--border)}
+.place{width:100%;margin-top:8px;padding:13px;background:var(--green);color:#000;border:0;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit}
+.place:disabled{opacity:.35}
+.empty{text-align:center;color:var(--text2);font-size:.75rem;padding:24px 10px}
+#toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:9px 16px;border-radius:10px;font-weight:700;font-size:.8rem;z-index:50;max-width:92vw;text-align:center}
+@media(max-width:700px){.body{flex-direction:column}.cart{width:100%;border-left:0;border-top:1px solid var(--border);max-height:44%}.items{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}.logo{font-size:3rem}}
+</style>
+</head>
+<body>
+
+<div class="screen" id="sc-load"><div class="logo">CBS</div><div class="msg" id="load-msg">Loading…</div></div>
+
+<div class="screen hide" id="sc-welcome">
+  <div class="logo">CBS</div><div class="venue" id="venue"></div>
+  <div class="row">
+    <button class="tbtn eat" onclick="chooseType('dineIn')"><span class="ic">🍽️</span><b>Eat In</b><small>Dine at your table</small></button>
+    <button class="tbtn ta" onclick="chooseType('takeaway')"><span class="ic">🥡</span><b>Takeaway</b><small>Pick up your order</small></button>
+  </div>
+</div>
+
+<div class="screen hide" id="sc-table">
+  <button class="back" onclick="go('sc-welcome')">← Back</button>
+  <div class="ttl">Choose Your Table</div><div class="sub">Tap your table number</div>
+  <div class="tabs"><button class="tab on" id="tr" onclick="sec('restaurant')">🍽 Restaurant</button><button class="tab" id="tb" onclick="sec('bar')">🍺 Bar</button></div>
+  <div class="grid" id="grid"></div>
+  <button class="big" id="next" onclick="requestApproval()" disabled>Select a table to continue →</button>
+</div>
+
+<div class="screen hide" id="sc-wait">
+  <div style="font-size:4rem" id="w-ic">⏳</div>
+  <div class="cti" id="w-ti" style="color:var(--accent2)">Waiting for staff…</div>
+  <div class="msg" id="w-msg"></div>
+  <button class="big alt" onclick="cancelWait()" id="w-btn">Cancel &amp; choose another table</button>
+</div>
+
+<div class="screen hide app" id="sc-app">
+  <div class="top"><div class="lg">CBS</div><div class="badge" id="badge">Table</div><div class="badge" id="ttype">Eat In</div>
+    <button class="back" style="position:static;margin-left:auto;padding:5px 10px;font-size:.68rem" onclick="go('sc-welcome')">🔄 New</button></div>
+  <div class="body">
+    <div class="menu"><div class="cats" id="cats"></div><div class="items" id="items"></div></div>
+    <div class="cart">
+      <div class="ch"><b>Your Order</b><small id="ccount">Nothing added yet</small></div>
+      <div class="ci" id="ci"></div>
+      <div class="cf">
+        <div class="tr"><span>Subtotal</span><span id="t-sub"></span></div>
+        <div class="tr"><span id="t-vl">VAT</span><span id="t-vat"></span></div>
+        <div class="tr" id="t-sr"><span>Service</span><span id="t-svc"></span></div>
+        <div class="tr g"><span>Total</span><span id="t-grand"></span></div>
+        <button class="place" id="place" onclick="place()" disabled>Place Order</button>
+        <div class="sub" style="margin:6px 0 0;text-align:center">You pay at the till</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen hide" id="sc-done">
+  <div style="font-size:4.5rem">✅</div><div class="cti" style="color:var(--green)">Order Placed!</div>
+  <div class="msg" id="d-msg"></div><div class="ref" id="d-ref"></div>
+  <button class="big" style="background:var(--accent)" onclick="go('sc-welcome')">Order More / New Order</button>
+</div>
+
+<div class="screen hide" id="sc-err"><div class="logo">CBS</div><div class="msg" id="err-msg"></div></div>
+
+<script>
+'use strict';
+const API=window.CBS_API,P=new URLSearchParams(location.search);
+const BIZ=(P.get('biz')||'').toLowerCase(),QT=(P.get('t')||'').toUpperCase();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let I=null,MENU=[];const S={type:'dineIn',table:null,sec:'restaurant',cart:[],cat:'All'};
+const fmt=n=>I.currency+(+n||0).toFixed(2);
+const label=t=>t.startsWith('B')?'Bar '+t.slice(1):t.startsWith('TA')?'Takeaway #'+t.split('-')[1]:'Table '+t.slice(1);
+
+async function api(action,b){
+  try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({action,biz:BIZ},b))});
+    return{ok:r.ok,j:await r.json().catch(()=>({}))}}catch(e){return{ok:false,j:{error:'No connection. Please try again.'}}}
+}
+function go(id){document.querySelectorAll('.screen').forEach(e=>e.classList.add('hide'));$(id).classList.remove('hide')}
+function fail(m){$('err-msg').textContent=m;go('sc-err')}
+function toast(m){const t=document.createElement('div');t.id='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
+const inRange=t=>{const m=/^([TB])(\d{1,3})$/.exec(t);return !!m&&+m[2]>=1&&+m[2]<=(m[1]==='T'?I.tableCount:I.barSeats)};
+
+async function init(){
+  if(!API||/YOUR-PROJECT/.test(API)||!BIZ)return fail('Please scan the QR code on your table, or open the link your venue gave you.');
+  const r=await api('so_info');
+  if(!r.ok)return fail(r.j.error||'Ordering is not available right now.');
+  I=r.j;MENU=I.menu;document.title=I.name+' — Order Here';$('venue').textContent=I.name;
+  $('t-vl').textContent='VAT ('+I.vatRate+'%)';$('t-sr').style.display=I.svc?'flex':'none';
+  if(inRange(QT)){S.type='dineIn';S.table=QT;requestApproval()}else go('sc-welcome');
+}
+
+function chooseType(t){
+  S.type=t;S.table=null;
+  if(t==='takeaway'){S.table='TA-'+Math.floor(1000+Math.random()*9000);goMenu()}
+  else{sec('restaurant');go('sc-table')}
+}
+async function sec(s){
+  S.sec=s;S.table=null;$('tr').classList.toggle('on',s==='restaurant');$('tb').classList.toggle('on',s==='bar');
+  $('next').disabled=true;$('next').textContent='Select a table to continue →';
+  const r=await api('so_tables');if(r.ok)I.occupied=r.j.occupied;grid();
+}
+function grid(){
+  const n=S.sec==='restaurant'?I.tableCount:I.barSeats,p=S.sec==='restaurant'?'T':'B';
+  $('grid').innerHTML=Array.from({length:n},(_,i)=>{const k=p+(i+1),o=I.occupied.includes(k);
+    return'<button class="cell'+(o?' occ':'')+(S.table===k?' sel':'')+'" onclick="pick(\''+k+'\')"><b>'+(i+1)+'</b><small>'+(o?'Busy':'Free')+'</small></button>'}).join('');
+}
+function pick(k){S.table=k;grid();$('next').disabled=false;$('next').textContent='Continue with '+label(k)+' →'}
+
+/* ---- staff confirmation ---- */
+let wT=null,lastReq=0;
+function waitUi(ic,ti,msg,btn,col){$('w-ic').textContent=ic;$('w-ti').textContent=ti;$('w-ti').style.color=col||'var(--accent2)';$('w-msg').textContent=msg;$('w-btn').textContent=btn}
+async function requestApproval(){
+  if(!S.table)return;
+  waitUi('⏳','Waiting for staff…','We are just confirming '+label(S.table)+' with our team. This usually only takes a moment.','Cancel & choose another table');
+  go('sc-wait');lastReq=Date.now();
+  const r=await api('so_request',{table:S.table,orderType:S.type});
+  if(!r.ok){waitUi('⚠️','Could not contact the venue',r.j.error||'Please try again.','Back','var(--red)');return}
+  stopWatch();
+  wT=setInterval(async()=>{
+    const s=await api('so_status',{table:S.table});if(!s.ok)return;const st=s.j.status;
+    if(st==='approved'){stopWatch();goMenu()}
+    else if(st==='declined'){stopWatch();waitUi('⚠️','Not available right now',"Sorry, a member of staff couldn't confirm this table. Please choose another table or ask us for help.",'Choose another table','var(--red)');api('so_clear',{table:S.table})}
+    else if(st==='none'&&Date.now()-lastReq>5000){lastReq=Date.now();api('so_request',{table:S.table,orderType:S.type})}
+  },1500);
+}
+function stopWatch(){if(wT){clearInterval(wT);wT=null}}
+function cancelWait(){stopWatch();if(S.table)api('so_clear',{table:S.table});S.table=null;sec(S.sec);go('sc-table')}
+
+/* ---- menu ---- */
+function goMenu(){
+  S.cart=[];S.cat='All';
+  $('badge').textContent=label(S.table);$('badge').className='badge'+(S.type==='takeaway'?' ta':'');
+  $('ttype').textContent=S.type==='takeaway'?'🥡 Takeaway':'🍽 Eat In';
+  cats();items();cart();go('sc-app');
+}
+function cats(){
+  $('cats').innerHTML=['All',...new Set(MENU.map(m=>m.category))].map(c=>'<button class="cat'+(c===S.cat?' on':'')+'" data-c="'+esc(c)+'">'+esc(c)+'</button>').join('');
+  $('cats').querySelectorAll('.cat').forEach(b=>b.onclick=()=>{S.cat=b.dataset.c;cats();items()});
+}
+function items(){
+  const l=S.cat==='All'?MENU:MENU.filter(m=>m.category===S.cat);
+  if(!l.length){$('items').innerHTML='<div class="empty">The menu is not available yet.</div>';return}
+  $('items').innerHTML=l.map(m=>{const c=S.cart.find(x=>x.id===m.id);
+    return'<div class="it'+(c?' in':'')+'" data-id="'+esc(m.id)+'"><span class="d">'+(m.dest==='bar'?'🍺':'🍳')+'</span>'
+      +(m.img&&/^data:image\//.test(m.img)?'<img src="'+m.img+'" alt="">':'<span class="em">'+esc(m.emoji||'🍽')+'</span>')
+      +'<div class="n">'+esc(m.name)+'</div><div class="c">'+esc(m.category)+'</div><div class="p">'+fmt(m.price)+'</div>'
+      +(c?'<div class="qr"><div class="qb" data-d="-1">−</div><div class="qn">'+c.qty+'</div><div class="qb" data-d="1">+</div></div>':'<div class="c" style="margin-top:6px">Tap to add</div>')+'</div>'}).join('');
+  $('items').querySelectorAll('.it').forEach(e=>e.onclick=ev=>{const d=ev.target.closest('.qb');qty(e.dataset.id,d?+d.dataset.d:1)});
+}
+function qty(id,d){
+  const m=MENU.find(x=>x.id===id);if(!m)return;let c=S.cart.find(x=>x.id===id);
+  if(!c){if(d<0)return;c={id,name:m.name,price:m.price,emoji:m.emoji,qty:0};S.cart.push(c)}
+  c.qty=Math.min(20,c.qty+d);if(c.qty<=0)S.cart=S.cart.filter(x=>x.id!==id);
+  items();cart();
+}
+function cart(){
+  const n=S.cart.reduce((s,c)=>s+c.qty,0);
+  $('ccount').textContent=n?n+' item'+(n>1?'s':''):'Nothing added yet';$('place').disabled=!n;
+  $('ci').innerHTML=n?S.cart.map(c=>'<div class="cl"><div class="qb" onclick="qty(\''+esc(c.id)+'\',-1)">−</div><div class="qn">'+c.qty+'</div><div class="qb" onclick="qty(\''+esc(c.id)+'\',1)">+</div><div class="i"><b>'+esc(c.emoji||'')+' '+esc(c.name)+'</b><span>'+fmt(c.price*c.qty)+'</span></div></div>').join(''):'<div class="empty">Browse the menu and add items</div>';
+  const net=S.cart.reduce((s,c)=>s+c.price*c.qty,0),vat=net*I.vatRate/100,svc=I.svc?net*I.svcRate/100:0;
+  $('t-sub').textContent=fmt(net);$('t-vat').textContent=fmt(vat);$('t-svc').textContent=fmt(svc);$('t-grand').textContent=fmt(net+vat+svc);
+}
+async function place(){
+  if(!S.cart.length)return;const b=$('place');b.disabled=true;b.textContent='Sending…';
+  const r=await api('so_order',{table:S.table,orderType:S.type,items:S.cart.map(c=>({id:c.id,qty:c.qty}))});
+  b.textContent='Place Order';
+  if(!r.ok){b.disabled=false;toast(r.j.error||'Could not place the order');if(/confirm your table/.test(r.j.error||''))setTimeout(()=>go('sc-welcome'),2500);return}
+  $('d-ref').textContent=r.j.ref;
+  $('d-msg').textContent=(S.type==='takeaway'?'Your takeaway order has been placed. We will call you when it is ready.':'Your order has been sent to the kitchen and bar. Your server will bring everything to '+label(S.table)+'.')+' Please pay at the till.';
+  go('sc-done');
+}
+init();
+</script>
+</body>
+</html>

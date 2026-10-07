@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>CBSystem</title>
+</head>
+<body style="background:#0a0a0f;color:#9090b0;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+<div id="m">Loading…</div>
+<script>
+/* Loads your unchanged POS file (pos.html, same folder) and adds the two
+   cloud scripts just before its closing body tag. */
+fetch('pos.html',{cache:'no-store'})
+  .then(function(r){if(!r.ok)throw new Error('missing');return r.text();})
+  .then(function(t){
+    var add='<script src="../config.js"><\/script><script src="cloud.js"><\/script>';
+    var i=t.lastIndexOf('</body>');
+    t=i<0?t+add:t.slice(0,i)+add+t.slice(i);
+    document.open();document.write(t);document.close();
+  })
+  .catch(function(){
+    document.getElementById('m').textContent='Could not load pos.html. Upload your POS file into the staff folder and name it pos.html.';
+  });
+</script>
+</body></html>
