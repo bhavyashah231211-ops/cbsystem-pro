@@ -8,9 +8,9 @@
 <body style="background:#0a0a0f;color:#9090b0;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
 <div id="m">Loading…</div>
 <script>
-/* Loads the POS from the top of this site (../index.html) and adds tenant.js
+/* Loads the POS from this folder (pos.html) and adds tenant.js
    just before its closing body tag. Nothing to copy or edit by hand. */
-fetch('../index.html',{cache:'no-store'})
+fetch('pos.html',{cache:'no-store'})
   .then(function(r){if(!r.ok)throw new Error('missing');return r.text();})
   .then(function(t){
     var add='<script src="tenant.js"><\/script>';
@@ -30,7 +30,7 @@ fetch('../index.html',{cache:'no-store'})
     },500);
   })
   .catch(function(){
-    document.getElementById('m').textContent='Could not load the POS. Check that index.html is in the top folder of the site.';
+    document.getElementById('m').textContent='Could not load the POS. Check that pos.html is in the staff folder.';
   });
 </script>
 </body></html>
